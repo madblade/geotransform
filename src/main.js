@@ -15,12 +15,21 @@ let NEAR = 0.001;
 let FAR = 5000;
 
 let camera;
-let scene;
 let renderer;
-let renderTarget;
 let inputWidth;
 let inputHeight;
-let plane;
+
+let sceneTarget;
+let sceneCurrent;
+let sceneTest;
+let scenePrimitive;
+
+let renderTargetTarget;
+let renderTargetCurrent;
+let renderTargetTest;
+let renderTargetPrimitive;
+
+let planeTarget;
 let background;
 
 init();
@@ -28,37 +37,45 @@ animate();
 
 function loadImage(insideWidth, insideHeight) {
     let map = new TextureLoader().load('img/test.png');
-    // map.anisotropy = 16;
-    // map.magFilter = NearestFilter;
-    // map.minFilter = NearestMipmapLinearFilter;
-
     let planegeom = new PlaneBufferGeometry(insideWidth, insideHeight, 1);
     let planemat = new MeshBasicMaterial({color: 0xffffff, map});
-    plane = new Mesh(planegeom, planemat);
-    scene.add(plane);
+    planeTarget = new Mesh(planegeom, planemat);
+    sceneTarget.add(planeTarget);
 }
 
-function addSomeShit(color) {
+function addBackground(color) {
     let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
     let planemat = new MeshBasicMaterial({ color });
-    let background = new Mesh(planegeom, planemat);
-    scene.add(background);
-    let e = makeEllipse(1, 1, 1, 0.5, Math.PI / 8);
-    scene.add(e);
-    scene.remove(plane);
+    background = new Mesh(planegeom, planemat);
+    sceneTarget.add(background);
+    sceneTarget.remove(planeTarget);
 }
 
-let firstBuffer;
+function addSomeShit() {
+    let e = makeEllipse(1, 1, 1, 0.5, Math.PI / 8);
+    sceneTarget.add(e);
+}
+
+let bufferTarget; let bufferTargetLength = 0;
+function fillBuffers() {
+    bufferTargetLength = renderTargetTarget.width * renderTargetTarget.height * 4;
+    bufferTarget = new Uint8Array(bufferTargetLength);
+    bufferCurrentLength = bufferTargetLength;
+    bufferCurrent = new Uint8Array(bufferCurrentLength);
+    bufferPrimitiveLength = bufferTargetLength;
+    bufferPrimitive = new Uint8Array(bufferPrimitiveLength);
+    bufferTestLength = bufferTargetLength;
+    bufferTest = new Uint8Array(bufferTestLength);
+    // read image into the target buffer
+    renderer.readRenderTargetPixels(renderTargetTarget, 0, 0, inputWidth, inputHeight, bufferTarget);
+    console.log(bufferTarget);
+}
 function computeBackgroundColorOutput() {
-    let bufferLength = renderTarget.width * renderTarget.height * 4;
-    firstBuffer = new Uint8Array(bufferLength);
-    renderer.readRenderTargetPixels(renderTarget, 0, 0, inputWidth, inputHeight, firstBuffer);
-    console.log(firstBuffer);
     let r = 0; let g = 0; let b = 0; let tot = 0;
-    for (let i = 0; i < bufferLength; i += 4) {
-        r += firstBuffer[i];
-        g += firstBuffer[i + 1];
-        b += firstBuffer[i + 2];
+    for (let i = 0; i < bufferTargetLength; i += 4) {
+        r += bufferTarget[i];
+        g += bufferTarget[i + 1];
+        b += bufferTarget[i + 2];
         ++tot;
     }
     r /= tot;
@@ -66,6 +83,10 @@ function computeBackgroundColorOutput() {
     b /= tot;
     return new Color(r, g, b);
 }
+
+let bufferCurrent; let bufferCurrentLength = 0;
+let bufferTest; let bufferTestLength = 0;
+let bufferPrimitive; let bufferPrimitiveLength = 0;
 
 function init() {
     // size
@@ -82,10 +103,10 @@ function init() {
     let rendererElement = renderer.domElement;
     rendererElement.setAttribute('id', 'canvas');
     container.appendChild(rendererElement);
-    renderTarget = new WebGLRenderTarget(inputWidth, inputHeight);
+    renderTargetTarget = new WebGLRenderTarget(inputWidth, inputHeight);
 
     // scene
-    scene = new Scene();
+    sceneTarget = new Scene();
 
     // camera
     let insideHeight = inputHeight / 10;
@@ -100,7 +121,11 @@ function init() {
 }
 
 function begin() {
+    fillBuffers(); // target buffer
+
     let color = computeBackgroundColorOutput();
+    addBackground(color);
+
     console.log(color);
     addSomeShit(color);
 }
@@ -142,8 +167,8 @@ function animate() {
     if (isRequestingCapture || isRequestingBegin) {
         captureFrame();
     }
-    renderer.setRenderTarget(renderTarget);
-    renderer.render(scene, camera);
+    renderer.setRenderTarget(renderTargetTarget);
+    renderer.render(sceneTarget, camera);
     renderer.setRenderTarget(null);
-    renderer.render(scene, camera);
+    renderer.render(sceneTarget, camera);
 }
