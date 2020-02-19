@@ -4,7 +4,7 @@ import {
     Scene, PerspectiveCamera,
     Mesh, MeshPhongMaterial, MeshNormalMaterial, BoxGeometry,
     AmbientLight, TextureLoader, SpriteMaterial, Sprite, OrthographicCamera,
-    PlaneBufferGeometry, MeshBasicMaterial, Vector3, NearestFilter, NearestMipmapLinearFilter, WebGLRenderTarget
+    PlaneBufferGeometry, MeshBasicMaterial, Vector3, NearestFilter, NearestMipmapLinearFilter, WebGLRenderTarget, Color
 } from 'three';
 import makeEllipse from './ellipse';
 
@@ -20,6 +20,8 @@ let renderer;
 let renderTarget;
 let inputWidth;
 let inputHeight;
+let plane;
+let background;
 
 init();
 animate();
@@ -32,22 +34,37 @@ function loadImage(insideWidth, insideHeight) {
 
     let planegeom = new PlaneBufferGeometry(insideWidth, insideHeight, 1);
     let planemat = new MeshBasicMaterial({color: 0xffffff, map});
-    let plane = new Mesh(planegeom, planemat);
+    plane = new Mesh(planegeom, planemat);
     scene.add(plane);
 }
 
-function addSomeShit() {
+function addSomeShit(color) {
+    let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
+    let planemat = new MeshBasicMaterial({ color });
+    let background = new Mesh(planegeom, planemat);
+    scene.add(background);
     let e = makeEllipse(1, 1, 1, 0.5, Math.PI / 8);
     scene.add(e);
+    scene.remove(plane);
 }
 
 let firstBuffer;
 function computeBackgroundColorOutput() {
-    firstBuffer = new Uint8Array(renderTarget.width * renderTarget.height * 4);
-    // console.log(firstBuffer);
-    // console.log(renderTarget);
-    renderer.readRenderTargetPixels(renderTarget, 0, 0, inputWidth - 1, inputHeight - 1, firstBuffer);
-    console.log(firstBuffer[1000]);
+    let bufferLength = renderTarget.width * renderTarget.height * 4;
+    firstBuffer = new Uint8Array(bufferLength);
+    renderer.readRenderTargetPixels(renderTarget, 0, 0, inputWidth, inputHeight, firstBuffer);
+    console.log(firstBuffer);
+    let r = 0; let g = 0; let b = 0; let tot = 0;
+    for (let i = 0; i < bufferLength; i += 4) {
+        r += firstBuffer[i];
+        g += firstBuffer[i + 1];
+        b += firstBuffer[i + 2];
+        ++tot;
+    }
+    r /= tot;
+    g /= tot;
+    b /= tot;
+    return new Color(r, g, b);
 }
 
 function init() {
@@ -83,8 +100,9 @@ function init() {
 }
 
 function begin() {
-    computeBackgroundColorOutput();
-    addSomeShit();
+    let color = computeBackgroundColorOutput();
+    console.log(color);
+    addSomeShit(color);
 }
 
 // ####################
