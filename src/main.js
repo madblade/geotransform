@@ -6,13 +6,9 @@ import {
     AmbientLight
 } from 'three';
 
-// scene size
-let WIDTH = window.innerWidth;
-let HEIGHT = window.innerHeight;
-
 // camera
 let VIEW_ANGLE = 45;
-let ASPECT = WIDTH / HEIGHT;
+let ASPECT = 1;
 let NEAR = 0.001;
 let FAR = 500;
 
@@ -26,16 +22,20 @@ animate();
 
 function init() {
     let container = document.getElementById('container');
-    let inputWidth = document.getElementById('input').offsetWidth;
-    let height = inputWidth / ASPECT;
-    console.log(height);
+    let inputElement = document.getElementById('input-image');
+    let inputWidth = inputElement.offsetWidth;
+    let inputHeight = inputElement.offsetHeight;
+    ASPECT = inputWidth / inputHeight;
 
     // renderer
     renderer = new WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(inputWidth, height);
-    renderer.domElement.setAttribute('id', 'canvas');
-    container.appendChild(renderer.domElement);
+    renderer.setSize(inputWidth, inputHeight);
+    let rendererElement = renderer.domElement;
+    rendererElement.setAttribute('id', 'canvas');
+    rendererElement.setAttribute('width', parseInt(inputWidth, 10).toString());
+    rendererElement.setAttribute('height', parseInt(inputHeight, 10).toString());
+    container.appendChild(rendererElement);
 
     // scene
     scene = new Scene();
@@ -54,8 +54,11 @@ function init() {
     document.addEventListener('keydown', event => {
         switch (event.keyCode) {
             case 66: // B
-                console.log('B hit');
                 isRequestingCapture = true;
+                break;
+            case 221: // À
+                isRequestingCapture = true;
+                captureFrame();
                 break;
             default: break;
         }
@@ -72,7 +75,7 @@ function captureFrame() {
 }
 
 function animate() {
-    requestAnimationFrame(animate);
+    // requestAnimationFrame(animate);
     cube.rotation.z += 0.01;
     cube.rotation.y += 0.01;
     if (isRequestingCapture) {
