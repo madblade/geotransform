@@ -31,9 +31,10 @@ function init() {
     console.log(height);
 
     // renderer
-    renderer = new WebGLRenderer({ antialias: true });
+    renderer = new WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(inputWidth, height);
+    renderer.domElement.setAttribute('id', 'canvas');
     container.appendChild(renderer.domElement);
 
     // scene
@@ -52,26 +53,30 @@ function init() {
 
     document.addEventListener('keydown', event => {
         switch (event.keyCode) {
-            case 32:
-                cube.position.y += 1.2;
-                break;
-            case 16:
-                cube.position.y -= 1.2;
-                break;
-            case 83:
-                camera.position.z++;
-                break;
-            case 90:
-                camera.position.z--;
+            case 66: // B
+                console.log('B hit');
+                isRequestingCapture = true;
                 break;
             default: break;
         }
     });
 }
 
+let isRequestingCapture = false;
+function captureFrame() {
+    isRequestingCapture = false;
+    let canvas = document.getElementById('canvas');
+    let outputImage = document.getElementById('output-image');
+    let data = canvas.toDataURL('image/png', 1);
+    outputImage.setAttribute('src', data);
+}
+
 function animate() {
     requestAnimationFrame(animate);
     cube.rotation.z += 0.01;
     cube.rotation.y += 0.01;
+    if (isRequestingCapture) {
+        captureFrame();
+    }
     renderer.render(scene, camera);
 }
