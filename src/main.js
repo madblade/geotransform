@@ -3,14 +3,16 @@ import {
     WebGLRenderer,
     Scene, PerspectiveCamera,
     Mesh, MeshPhongMaterial, MeshNormalMaterial, BoxGeometry,
-    AmbientLight
+    AmbientLight, TextureLoader, SpriteMaterial, Sprite, OrthographicCamera,
+    PlaneBufferGeometry, MeshBasicMaterial, Vector3, NearestFilter, NearestMipmapLinearFilter
 } from 'three';
+import makeEllipse from './ellipse';
 
 // camera
 let VIEW_ANGLE = 45;
 let ASPECT = 1;
 let NEAR = 0.001;
-let FAR = 500;
+let FAR = 5000;
 
 let camera;
 let scene;
@@ -29,27 +31,39 @@ function init() {
 
     // renderer
     renderer = new WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(1);
+    // renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(inputWidth, inputHeight);
     let rendererElement = renderer.domElement;
     rendererElement.setAttribute('id', 'canvas');
-    rendererElement.setAttribute('width', parseInt(inputWidth, 10).toString());
-    rendererElement.setAttribute('height', parseInt(inputHeight, 10).toString());
     container.appendChild(rendererElement);
 
     // scene
     scene = new Scene();
-    let l = new AmbientLight();
-    scene.add(l);
+    // let light = new AmbientLight();
+    // scene.add(light);
+    let e = makeEllipse(1, 1, 1, 0.5, Math.PI / 8);
+    scene.add(e);
 
     // camera
+    let insideHeight = inputHeight / 10;
+    let insideWidth = inputWidth / 10;
     camera = new PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
-    camera.position.set(0, 0, 160);
+    camera.position.set(0, 0, (0.5 * insideHeight) / (Math.tan(Math.PI / 8)));
 
     let cubeGeo = new BoxGeometry(12.5, 12.5, 12.5);
-    cube = new Mesh(cubeGeo, new MeshPhongMaterial({ color: 0xff0000 }));
     cube = new Mesh(cubeGeo, new MeshNormalMaterial());
-    scene.add(cube);
+    cube.position.z = 10;
+
+    let map = new TextureLoader().load('img/test.png');
+    // map.anisotropy = 16;
+    // map.magFilter = NearestFilter;
+    // map.minFilter = NearestMipmapLinearFilter;
+
+    let planegeom = new PlaneBufferGeometry(insideWidth, insideWidth, 1);
+    let planemat = new MeshBasicMaterial({color: 0xffffff, map});
+    let plane = new Mesh(planegeom, planemat);
+    scene.add(plane);
 
     document.addEventListener('keydown', event => {
         switch (event.keyCode) {
@@ -75,7 +89,7 @@ function captureFrame() {
 }
 
 function animate() {
-    // requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
     cube.rotation.z += 0.01;
     cube.rotation.y += 0.01;
     if (isRequestingCapture) {
