@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Wormhole test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            color: #888888;
+            font-family:Monospace;
+            font-size:13px;
+            background-color: #000;
+            margin: 0px;
+            overflow: hidden;
+        }
+        a { color: #00f; }
+        #workspace { display: flex; flex-wrap: wrap; }
+        #input { flex: 1; }
+        #container { flex: 1; }
+        #output { flex: 1; }
+    </style>
+</head>
+<body>
+    <div id="workspace">
+        <div id="input">
+            <h5>Input</h5>
+            <img src="img/test.png"/>
+        </div>
+        <div id="container">
+            <h5>Progress</h5>
+        </div>
+        <div id="output">
+            <h5>Output</h5>
+        </div>
+    </div>
+    <script src="dist/build.js"></script>
+</body>
+</html>
