@@ -13,6 +13,7 @@ import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
+import {Random} from './random';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -42,6 +43,8 @@ let planeTarget;
 let planeCurrent;
 let planeTest;
 let background;
+
+let RNG = new Random('baboulinet');
 
 init();
 animate();
@@ -109,7 +112,6 @@ function init() {
 
     addListeners();
 }
-
 
 // Buffers
 let bufferTarget; let bufferTargetLength = 0;
@@ -186,14 +188,14 @@ function computeNewPrimitiveColor() {
         clamp((gsum / nbIn) >> 8, 0, 255),
         clamp((bsum / nbIn) >> 8, 0, 255),
     );
-    console.log(nbOut);
-    console.log(nbIn);
-    console.log(c);
+    // console.log(nbOut);
+    // console.log(nbIn);
+    // console.log(c);
     return c;
 }
 
 function computeBufferDistance(buffer1, buffer2) {
-    let total = 0; // TODO initialize to the background difference
+    let total = 0;
     let nbIn = 0;
     for (let i = 0; i < bufferPrimitiveLength; i += 4) {
         const tr = buffer1[i];
