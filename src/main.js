@@ -8,7 +8,7 @@ import {
     LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
     // ShaderPass, EffectComposer, RenderPass
 } from 'three';
-import makeEllipse from './ellipse';
+import makeEllipse, {Ellipse} from './ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -166,10 +166,11 @@ function computeNewPrimitiveColor() {
     let alpha = 128;
     let a = 0x101 * 255 / alpha;
     let rsum = 0; let gsum = 0; let bsum = 0;
-    let nbOut = 0; let nbIn = 0;
+    // let nbOut = 0;
+    let nbIn = 0;
     for (let i = 0; i < bufferTestLength; i += 4) {
         if (bufferPrimitive[i] + bufferPrimitive[i + 1] + bufferPrimitive[i + 2] === 0) {
-            nbOut++;
+            // nbOut++;
             continue;
         }
         const tr = bufferTarget[i];
@@ -188,15 +189,11 @@ function computeNewPrimitiveColor() {
         clamp((gsum / nbIn) >> 8, 0, 255),
         clamp((bsum / nbIn) >> 8, 0, 255),
     );
-    // console.log(nbOut);
-    // console.log(nbIn);
-    // console.log(c);
     return c;
 }
 
 function computeBufferDistance(buffer1, buffer2) {
     let total = 0;
-    let nbIn = 0;
     for (let i = 0; i < bufferPrimitiveLength; i += 4) {
         const tr = buffer1[i];
         const tg = buffer1[i + 1];
@@ -208,12 +205,8 @@ function computeBufferDistance(buffer1, buffer2) {
         // const aa = buffer2[i + 3];
         const dr = tr - ar; const dg = tg - ag; const db = tb - ab; // const da = ta - aa;
         total += dr * dr + dg * dg + db * db; // + da * da;
-        nbIn++;
     }
     const distance = Math.sqrt(total / (inputWidth * inputHeight * 4)) / 255;
-    console.log(nbIn);
-    console.log(total);
-    console.log(distance);
     return distance;
 }
 
@@ -227,18 +220,16 @@ function makeBackground(color) {
 }
 
 function makeNewPrimitive(color) {
-    let e = makeEllipse(
-        2, 4, 1,
-        1, 0.5,
-        Math.PI / 8,
-        color
+    let e = new Ellipse(RNG,
+        2, 4,
+        1, 0.5, Math.PI / 8, color
     );
     return e;
 }
 
 // Main algorithm
 let currentPrimitive;
-let currentPrimitiveTest;
+// let currentPrimitiveTest;
 let step = 0;
 function step0() {
     initBuffers();
@@ -260,7 +251,7 @@ function step0() {
     // let randColor = new Color(Math.random() * 0xffffff);
     let randColor = new Color(0xffffff);
     currentPrimitive = makeNewPrimitive(randColor);
-    scenePrimitive.add(currentPrimitive);
+    scenePrimitive.add(currentPrimitive.getMesh());
 
     // Next.
     step++;
@@ -272,8 +263,9 @@ function step1() {
 
     // Get new color
     let color = computeNewPrimitiveColor();
-    currentPrimitiveTest = makeNewPrimitive(color);
-    sceneTest.add(currentPrimitiveTest);
+    currentPrimitive.setColor(color);
+    // currentPrimitiveTest = makeNewPrimitive(color);
+    sceneTest.add(currentPrimitive.getMesh());
 
     // Next.
     step++;
@@ -286,6 +278,10 @@ function step2() {
     // Compute Energy
     let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
     let dTest = computeBufferDistance(bufferTarget, bufferTest);
+
+    console.log('test');
+    console.log(dCurrent);
+    console.log(dTest);
 
     // Next.
     step++;

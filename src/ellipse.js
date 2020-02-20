@@ -14,6 +14,7 @@ var Ellipse = function(
     this.rY = rY;
     this.theta = theta;
     this.color = color;
+
     this.mutate = function() {
         let a = this.alpha;
         this.alpha = rng.clamp(a + Math.floor(rng.uniform() * 21) - 10, 1, 255);
@@ -32,24 +33,43 @@ var Ellipse = function(
                 break;
         }
     };
+
+    this.setColor = function(newColor) {
+        this.color = newColor;
+    };
+
+    // Drawing
+    this.getMesh = function() {
+        let geometry = new CircleBufferGeometry(5, 32);
+        let material = new MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            opacity: 0.5
+        });
+        let circle = new Mesh(geometry, material);
+        circle.position.set(this.cX, this.cY, 1);
+        circle.scale.set(this.rX, this.rY, 1);
+        circle.rotation.set(0, 0, this.theta);
+        return circle;
+    };
+
+    // Annealing
+    this._saved = false;
+    this._snp = [];
+    this.snapshot = function() {
+        this._snp = [this.alpha, this.cX, this.cY, this.rX, this.rY, this.theta, this.color];
+        this._saved = true;
+    };
+    this.rollback = function() {
+        if (!this._saved) return;
+        this.alpha = this._snp[0];
+        this.cX = this._snp[1];
+        this.cY = this._snp[2];
+        this.cX = this._snp[3];
+        this.cY = this._snp[4];
+        this.theta = this._snp[5];
+        this.color = this._snp[6];
+    };
 };
 
-function makeEllipse(
-    centerX, centerY, centerZ,
-    radiusX, radiusY,
-    rotation, color)
-{
-    let geometry = new CircleBufferGeometry(5, 32);
-    let material = new MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.5
-    });
-    let circle = new Mesh(geometry, material);
-    circle.position.set(centerX, centerY, centerZ);
-    circle.scale.set(radiusX, radiusY, 1);
-    circle.rotation.set(0, 0, rotation);
-    return circle;
-}
-
-export default makeEllipse;
+export { Ellipse };
