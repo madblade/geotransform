@@ -192,6 +192,29 @@ function computeNewPrimitiveColor() {
     return c;
 }
 
+function computeBufferDistance(buffer1, buffer2) {
+    let total = 0; // TODO initialize to the background difference
+    let nbIn = 0;
+    for (let i = 0; i < bufferPrimitiveLength; i += 4) {
+        const tr = buffer1[i];
+        const tg = buffer1[i + 1];
+        const tb = buffer1[i + 2];
+        // const ta = buffer1[i + 3];
+        const ar = buffer2[i];
+        const ag = buffer2[i + 1];
+        const ab = buffer2[i + 2];
+        // const aa = buffer2[i + 3];
+        const dr = tr - ar; const dg = tg - ag; const db = tb - ab; // const da = ta - aa;
+        total += dr * dr + dg * dg + db * db; // + da * da;
+        nbIn++;
+    }
+    const distance = Math.sqrt(total / (inputWidth * inputHeight * 4)) / 255;
+    console.log(nbIn);
+    console.log(total);
+    console.log(distance);
+    return distance;
+}
+
 // Primitives
 function makeBackground(color) {
     let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
@@ -213,6 +236,7 @@ function makeNewPrimitive(color) {
 
 // Main algorithm
 let currentPrimitive;
+let currentPrimitiveTest;
 let step = 0;
 function step0() {
     initBuffers();
@@ -235,6 +259,8 @@ function step0() {
     let randColor = new Color(0xffffff);
     currentPrimitive = makeNewPrimitive(randColor);
     scenePrimitive.add(currentPrimitive);
+
+    // Next.
     step++;
 }
 function step1() {
@@ -244,17 +270,27 @@ function step1() {
 
     // Get new color
     let color = computeNewPrimitiveColor();
-    let np = makeNewPrimitive(color);
-    sceneTest.add(np);
+    currentPrimitiveTest = makeNewPrimitive(color);
+    sceneTest.add(currentPrimitiveTest);
 
+    // Next.
     step++;
 }
 function step2() {
+    // Update rasters
+    fillBuffer(rendererCurrent, renderTargetCurrent, bufferCurrent);
+    fillBuffer(rendererTest, renderTargetTest, bufferTest);
+
+    // Compute Energy
+    let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
+    let dTest = computeBufferDistance(bufferTarget, bufferTest);
+
+    // Next.
     step++;
-    preCopyTestBufferToCurrentBuffer();
 }
 function step3() {
     step++;
+    preCopyTestBufferToCurrentBuffer();
 }
 function step4() {
     step++;
