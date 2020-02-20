@@ -2,13 +2,17 @@
 import {
     WebGLRenderer,
     Scene, PerspectiveCamera,
-    Mesh, MeshPhongMaterial, MeshNormalMaterial, BoxGeometry,
-    AmbientLight, TextureLoader, SpriteMaterial, Sprite, OrthographicCamera,
-    PlaneBufferGeometry, MeshBasicMaterial, Vector3, NearestFilter, NearestMipmapLinearFilter,
+    Mesh, TextureLoader,
+    PlaneBufferGeometry, MeshBasicMaterial,
     WebGLRenderTarget, Color,
-    LinearFilter, ClampToEdgeWrapping
+    LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
+    // ShaderPass, EffectComposer, RenderPass
 } from 'three';
 import makeEllipse from './ellipse';
+import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
+import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
+import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
+import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -29,10 +33,10 @@ let sceneCurrent;
 let sceneTest;
 let scenePrimitive;
 
-let renderTargetTarget;
-let renderTargetCurrent;
-let renderTargetTest;
-let renderTargetPrimitive;
+let renderTargetTarget; let composerTarget;
+let renderTargetCurrent; let composerCurrent;
+let renderTargetTest; let composerTest;
+let renderTargetPrimitive; let composerPrimitive;
 
 let planeTarget;
 let planeCurrent;
@@ -48,9 +52,20 @@ function newRenderer(elementId) {
     renderer.setPixelRatio(1); // renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(inputWidth, inputHeight);
     let rendererElement = renderer.domElement;
-    rendererElement.setAttribute('id', 'canvas-' + elementId);
+    rendererElement.setAttribute('id', `canvas-${elementId}`);
     parentElement.appendChild(rendererElement);
     return renderer;
+}
+
+function newComposer(renderer, scene, camera, renderTarget) {
+    let effectFXAA = new ShaderPass(FXAAShader);
+    effectFXAA.uniforms['resolution'].value.set(1 / inputWidth, 1 / inputHeight);
+    // effectFXAA.renderToScreen = true;
+    let composer = new EffectComposer(renderer, renderTarget);
+    let scenePass = new RenderPass(scene, camera);
+    composer.addPass(scenePass);
+    composer.addPass(effectFXAA);
+    return composer;
 }
 
 function init() {
@@ -83,6 +98,12 @@ function init() {
     mainCamera = new PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
     mainCamera.position.set(0, 0, (0.5 * insideHeight) / (Math.tan(Math.PI / 8)));
 
+    // FXAA
+    composerTarget = newComposer(rendererTarget, sceneTarget, mainCamera, renderTargetTarget);
+    composerCurrent = newComposer(rendererCurrent, sceneCurrent, mainCamera, renderTargetCurrent);
+    composerTest = newComposer(rendererTest, sceneTest, mainCamera, renderTargetTest);
+    composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
+
     // setup
     loadImage(insideWidth, insideHeight);
 
@@ -109,7 +130,21 @@ function initBuffers() {
 function fillTargetBuffer() {
     // read image into the target buffer
     rendererTarget.readRenderTargetPixels(renderTargetTarget, 0, 0, inputWidth, inputHeight, bufferTarget);
-    console.log(bufferTarget);
+    // console.log(bufferTarget);
+}
+
+function preCopyTestBufferToCurrentBuffer() {
+    rendererTest.readRenderTargetPixels(renderTargetTest, 0, 0, inputWidth, inputHeight, bufferCurrent);
+    let currentTexture = new DataTexture(bufferCurrent, inputWidth, inputHeight, RGBAFormat);
+    // sceneCurrent.remove(planeCurrent);
+
+    let planegeom = new PlaneBufferGeometry(inputWidth / 10, inputHeight / 10, 1);
+    let planemat = new MeshBasicMaterial({map: currentTexture});
+    // planemat.generateMipmaps = false;
+    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping;
+    planemat.minFilter = LinearFilter;
+    let np = new Mesh(planegeom, planemat);
+    sceneCurrent.add(np);
 }
 
 // Colors
@@ -128,20 +163,22 @@ function computeBackgroundColorOutput() {
 }
 
 // Primitives
-function addBackground(color, whichScene) {
+function makeBackground(color) {
     let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
     let planemat = new MeshBasicMaterial({ color });
     background = new Mesh(planegeom, planemat);
-    whichScene.add(background);
+    return background;
     // sceneTarget.remove(planeTarget);
 }
 
 function addSomeShit(whichScene) {
-    let e = makeEllipse(1, 1, 1, 0.5, Math.PI / 8);
+    let e = makeEllipse(1, 1, 1, 1, 0.5, Math.PI / 8);
     whichScene.add(e);
+    whichScene.add(makeEllipse(1, 1, 1, 1, 0.5, Math.PI / 2));
 }
 
-function begin() {
+let step = 0;
+function step0() {
     initBuffers();
 
     // Get rendered picture into TargetBuffer
@@ -150,13 +187,20 @@ function begin() {
     // Init CurrentScene with background
     let color = computeBackgroundColorOutput();
 
-    addBackground(color, sceneCurrent);
+    planeCurrent = makeBackground(color);
+    sceneCurrent.add(planeCurrent);
 
     // Init TestScene with background
-    addBackground(color, sceneTest);
+    planeTest = makeBackground(color);
+    sceneTest.add(planeTest);
 
     // Init PrimitiveScene with ellipse
     addSomeShit(scenePrimitive);
+    addSomeShit(sceneTest);
+    step++;
+}
+function step1() {
+    preCopyTestBufferToCurrentBuffer();
 }
 
 // ####################
@@ -170,7 +214,7 @@ function addListeners() {
                 isRequestingCapture = true;
                 break;
             case 221: // À
-                isRequestingBegin = true;
+                isRequestingStep = true;
                 break;
             default: break;
         }
@@ -189,33 +233,34 @@ function loadImage(insideWidth, insideHeight) {
 }
 
 let isRequestingCapture = false;
-let isRequestingBegin = false;
+let isRequestingStep = false;
 function captureFrame() {
     isRequestingCapture = false;
     let canvas = document.getElementById('canvas-buffer-current');
     let outputImage = document.getElementById('output-image');
     let data = canvas.toDataURL('image/png', 1);
     outputImage.setAttribute('src', data);
-    if (isRequestingBegin) {
-        isRequestingBegin = false;
-        begin();
+    if (isRequestingStep) {
+        isRequestingStep = false;
+        switch (step) {
+            case 0: step0(); break;
+            case 1: step1(); break;
+        }
     }
 }
 
-function renderPass(renderer, renderTarget, scene, camera) {
-    renderer.setRenderTarget(renderTarget);
+function renderPass(composer, renderer, scene, camera) {
     renderer.render(scene, camera);
-    renderer.setRenderTarget(null);
-    renderer.render(scene, camera);
+    composer.render();
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    if (isRequestingCapture || isRequestingBegin) {
+    if (isRequestingCapture || isRequestingStep) {
         captureFrame();
     }
-    renderPass(rendererTarget, renderTargetTarget, sceneTarget, mainCamera);
-    renderPass(rendererCurrent, renderTargetCurrent, sceneCurrent, mainCamera);
-    renderPass(rendererTest, renderTargetTest, sceneTest, mainCamera);
-    renderPass(rendererPrimitive, renderTargetPrimitive, scenePrimitive, mainCamera);
+    renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);
+    renderPass(composerCurrent, rendererCurrent, sceneCurrent, mainCamera);
+    renderPass(composerTest, rendererTest, sceneTest, mainCamera);
+    renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
 }
