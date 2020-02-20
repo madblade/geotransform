@@ -6,11 +6,11 @@ import {
 function makeEllipse(
     centerX, centerY, centerZ,
     radiusX, radiusY,
-    rotation)
+    rotation, color)
 {
     let geometry = new CircleBufferGeometry(5, 32);
     let material = new MeshBasicMaterial({
-        color: new Color(Math.random() * 0xffffff),
+        color,
         transparent: true,
         opacity: 0.5
     });

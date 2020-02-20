@@ -127,24 +127,21 @@ function initBuffers() {
     bufferTest = new Uint8Array(bufferTestLength);
 }
 
-function fillTargetBuffer() {
-    // read image into the target buffer
-    rendererTarget.readRenderTargetPixels(renderTargetTarget, 0, 0, inputWidth, inputHeight, bufferTarget);
-    // console.log(bufferTarget);
+function fillBuffer(renderer, renderTarget, buffer) {
+    renderer.readRenderTargetPixels(renderTarget, 0, 0, inputWidth, inputHeight, buffer);
 }
 
 function preCopyTestBufferToCurrentBuffer() {
     rendererTest.readRenderTargetPixels(renderTargetTest, 0, 0, inputWidth, inputHeight, bufferCurrent);
     let currentTexture = new DataTexture(bufferCurrent, inputWidth, inputHeight, RGBAFormat);
-    // sceneCurrent.remove(planeCurrent);
-
+    sceneCurrent.remove(planeCurrent);
     let planegeom = new PlaneBufferGeometry(inputWidth / 10, inputHeight / 10, 1);
     let planemat = new MeshBasicMaterial({map: currentTexture});
     // planemat.generateMipmaps = false;
-    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping;
-    planemat.minFilter = LinearFilter;
-    let np = new Mesh(planegeom, planemat);
-    sceneCurrent.add(np);
+    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping
+    // planemat.minFilter = LinearFilter;à
+    planeCurrent = new Mesh(planegeom, planemat);
+    sceneCurrent.add(planeCurrent);
 }
 
 // Colors
@@ -162,6 +159,39 @@ function computeBackgroundColorOutput() {
     return new Color(r, g, b);
 }
 
+function computeNewPrimitiveColor() {
+    // Scan / intestect and compute optimal color
+    let alpha = 128;
+    let a = 0x101 * 255 / alpha;
+    let rsum = 0; let gsum = 0; let bsum = 0;
+    let nbOut = 0; let nbIn = 0;
+    for (let i = 0; i < bufferTestLength; i += 4) {
+        if (bufferPrimitive[i] + bufferPrimitive[i + 1] + bufferPrimitive[i + 2] === 0) {
+            nbOut++;
+            continue;
+        }
+        const tr = bufferTarget[i];
+        const tg = bufferTarget[i + 1];
+        const tb = bufferTarget[i + 2];
+        const cr = bufferTest[i];
+        const cg = bufferTest[i + 1];
+        const cb = bufferTest[i + 2];
+        rsum += (tr - cr) * a + cr * 0x101;
+        gsum += (tg - cg) * a + cg * 0x101;
+        bsum += (tb - cb) * a + cb * 0x101;
+        nbIn++;
+    }
+    let c = new Color(
+        clamp((rsum / nbIn) >> 8, 0, 255),
+        clamp((gsum / nbIn) >> 8, 0, 255),
+        clamp((bsum / nbIn) >> 8, 0, 255),
+    );
+    console.log(nbOut);
+    console.log(nbIn);
+    console.log(c);
+    return c;
+}
+
 // Primitives
 function makeBackground(color) {
     let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
@@ -171,18 +201,24 @@ function makeBackground(color) {
     // sceneTarget.remove(planeTarget);
 }
 
-function addSomeShit(whichScene) {
-    let e = makeEllipse(1, 1, 1, 1, 0.5, Math.PI / 8);
-    whichScene.add(e);
-    whichScene.add(makeEllipse(1, 1, 1, 1, 0.5, Math.PI / 2));
+function makeNewPrimitive(color) {
+    let e = makeEllipse(
+        2, 4, 1,
+        1, 0.5,
+        Math.PI / 8,
+        color
+    );
+    return e;
 }
 
+// Main algorithm
+let currentPrimitive;
 let step = 0;
 function step0() {
     initBuffers();
 
     // Get rendered picture into TargetBuffer
-    fillTargetBuffer();
+    fillBuffer(rendererTarget, renderTargetTarget, bufferTarget);
 
     // Init CurrentScene with background
     let color = computeBackgroundColorOutput();
@@ -195,17 +231,42 @@ function step0() {
     sceneTest.add(planeTest);
 
     // Init PrimitiveScene with ellipse
-    addSomeShit(scenePrimitive);
-    addSomeShit(sceneTest);
+    // let randColor = new Color(Math.random() * 0xffffff);
+    let randColor = new Color(0xffffff);
+    currentPrimitive = makeNewPrimitive(randColor);
+    scenePrimitive.add(currentPrimitive);
     step++;
 }
 function step1() {
+    // Get rasters
+    fillBuffer(rendererPrimitive, renderTargetPrimitive, bufferPrimitive);
+    fillBuffer(rendererTest, renderTargetTest, bufferTest);
+
+    // Get new color
+    let color = computeNewPrimitiveColor();
+    let np = makeNewPrimitive(color);
+    sceneTest.add(np);
+
+    step++;
+}
+function step2() {
+    step++;
     preCopyTestBufferToCurrentBuffer();
+}
+function step3() {
+    step++;
+}
+function step4() {
+    step++;
 }
 
 // ####################
 // ####### UTIL #######
 // ####################
+
+function clamp(n, min, max) {
+    return Math.min(Math.max(n, min), max);
+}
 
 function addListeners() {
     document.addEventListener('keydown', event => {
@@ -245,6 +306,9 @@ function captureFrame() {
         switch (step) {
             case 0: step0(); break;
             case 1: step1(); break;
+            case 2: step2(); break;
+            case 3: step3(); break;
+            case 4: step4(); break;
         }
     }
 }
