@@ -21,7 +21,7 @@ module.exports = {
     "no-empty-character-class": 2,                              //disallow the use of empty character classes in regular expressions
     "no-empty": 2,                                              //disallow empty statements
     "no-ex-assign": 2,                                          //disallow assigning to the exception in a catch block
-    "no-extra-boolean-cast": 2,                                 //disallow double-negation boolean casts in a boolean context
+    // "no-extra-boolean-cast": 2,                                 //disallow double-negation boolean casts in a boolean context
     "no-extra-parens": 1,                                       //disallow unnecessary parentheses
     "no-extra-semi": 2,                                         //disallow unnecessary semicolons
     "no-func-assign": 2,                                        //disallow overwriting functions written as function declarations

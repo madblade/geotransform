@@ -15,6 +15,8 @@ var Ellipse = function(
     this.theta = theta;
     this.color = color;
 
+    this._meshes = [];
+
     this.mutate = function() {
         let a = this.alpha;
         this.alpha = rng.clamp(a + Math.floor(rng.uniform() * 21) - 10, 1, 255);
@@ -36,10 +38,25 @@ var Ellipse = function(
 
     this.setColor = function(newColor) {
         this.color = newColor;
+        if (this._meshes.length < 1) return;
+        for (let i = 0; i < this._meshes.length; ++i) {
+            this._meshes[i].material.color = newColor;
+        }
     };
 
     // Drawing
-    this.getMesh = function() {
+    this.getMesh = function(which) {
+        switch (which) {
+            case 0:
+                if (this._meshes.length > 0) return this._meshes[0];
+                break;
+            case 1:
+                if (this._meshes.length > 1) return this._meshes[1];
+                if (this._meshes.length < 1) return null;
+                break;
+            default: return;
+        }
+
         let geometry = new CircleBufferGeometry(5, 32);
         let material = new MeshBasicMaterial({
             color: this.color,
@@ -50,6 +67,8 @@ var Ellipse = function(
         circle.position.set(this.cX, this.cY, 1);
         circle.scale.set(this.rX, this.rY, 1);
         circle.rotation.set(0, 0, this.theta);
+
+        this._meshes.push(circle);
         return circle;
     };
 

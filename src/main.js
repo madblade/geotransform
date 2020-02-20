@@ -229,7 +229,6 @@ function makeNewPrimitive(color) {
 
 // Main algorithm
 let currentPrimitive;
-// let currentPrimitiveTest;
 let step = 0;
 function step0() {
     initBuffers();
@@ -251,7 +250,7 @@ function step0() {
     // let randColor = new Color(Math.random() * 0xffffff);
     let randColor = new Color(0xffffff);
     currentPrimitive = makeNewPrimitive(randColor);
-    scenePrimitive.add(currentPrimitive.getMesh());
+    scenePrimitive.add(currentPrimitive.getMesh(0));
 
     // Next.
     step++;
@@ -264,8 +263,7 @@ function step1() {
     // Get new color
     let color = computeNewPrimitiveColor();
     currentPrimitive.setColor(color);
-    // currentPrimitiveTest = makeNewPrimitive(color);
-    sceneTest.add(currentPrimitive.getMesh());
+    sceneTest.add(currentPrimitive.getMesh(1));
 
     // Next.
     step++;
