@@ -10,13 +10,16 @@
             font-family:Monospace;
             font-size:13px;
             background-color: #000;
-            margin: 0px;
+            margin: 0;
             overflow: hidden;
         }
         a { color: #00f; }
         #workspace { display: flex; flex-wrap: wrap; }
         #input { flex: 1; }
-        #container { flex: 1; }
+        #container { flex: 2; }
+        section { width: 100%; display: flex; flex-wrap: wrap; }
+        section>div { padding: 0 5px 5px;}
+        .line-break {width: 100%;}
         #output { flex: 1; }
     </style>
 </head>
@@ -27,7 +30,16 @@
             <img id="input-image" src="img/test.png"/>
         </div>
         <div id="container">
-            <h5>Progress</h5>
+            <section>
+                <h5>Progress</h5>
+            </section>
+            <section>
+                <div id="buffer-target"></div>
+                <div id="buffer-current"></div>
+                <div class="line-break"></div>
+                <div id="buffer-test"></div>
+                <div id="buffer-primitive"></div>
+            </section>
         </div>
         <div id="output">
             <h5>Output</h5>
