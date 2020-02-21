@@ -14,6 +14,7 @@ import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
 import {Random} from './random';
+import {GIFEncoder} from './GIFEncoder';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -106,7 +107,7 @@ function init() {
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight, 'img/test.png');
+    loadImage(insideWidth, insideHeight, 'img/g2.png');
 
     addListeners();
 }
@@ -235,7 +236,7 @@ let debo = false;
 let rng = new Random('Alpha');
 let maxIter = 25;
 let currentIter = 0;
-let maxShapes = 200;
+let maxShapes = 5;
 let nbShapes = 0;
 const STEP0 = 0;
 const STEP1A = 1; const STEP1B = 2; const STEP1C = 3;
@@ -243,7 +244,7 @@ const STEP2A = 4; const STEP2B = 5; const STEP2C = 6;
 const STEP3 = 7; const STEP4 = 8;
 
 function step0() {
-    if (debo) console.log('Step 1');
+    if (debo) console.log('Starting...');
     initBuffers();
 
     // Get rendered picture into TargetBuffer
@@ -420,9 +421,12 @@ function step3() {
 }
 
 function step4() {
-    if (debo) console.log('Done!');
+    console.log('Done!');
     isRequestingCapture = true;
-    gif.render();
+
+    isEncoderStarted = false;
+    encoder.finish();
+    encoder.download('anim.gif');
 
     step++; // = STEP0;
 }
@@ -462,18 +466,32 @@ function loadImage(insideWidth, insideHeight, path) {
 
 let isRequestingCapture = false;
 let isRequestingStep = false;
-let gif = new GIF({ workers: 2, quality: 10 });
+let encoder = new GIFEncoder();
+encoder.setRepeat(0);
+encoder.setSize(inputWidth, inputHeight);
+encoder.start();
+let isEncoderStarted = true;
+
 function captureFrame() {
     isRequestingCapture = false;
     let canvas = document.getElementById('canvas-buffer-test');
     let outputImage = document.getElementById('output-image');
     let data = canvas.toDataURL('image/png', 1);
     outputImage.setAttribute('src', data);
-    gif.addFrame(canvas, {delay: 100});
+
+    let c = new Uint8ClampedArray(bufferTestLength);
+    let k = 0;
+    for (let i = inputHeight - 1; i >= 0; --i) {
+        for (let j = 0; j < inputWidth * 4; j += 4) {
+            c[i * inputWidth * 4 + j] = bufferTest[k++];
+            c[i * inputWidth * 4 + j + 1] = bufferTest[k++];
+            c[i * inputWidth * 4 + j + 2] = bufferTest[k++];
+            c[i * inputWidth * 4 + j + 3] = bufferTest[k++];
+        }
+    }
+    if (isEncoderStarted)
+        encoder.addFrame(c, true);
 }
-gif.on('finished', function(blob) {
-    window.open(URL.createObjectURL(blob));
-});
 
 function stepAlgorithm() {
     // isRequestingStep = false;
