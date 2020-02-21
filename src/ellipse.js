@@ -16,7 +16,6 @@ let Ellipse = function(
     this.rY = rY;
     this.theta = theta;
     this.color = color;
-    this._meshes = [this.buildMesh(), this.buildMesh()];
 
     this.mutate = function() {
         let a = this.alpha;
@@ -49,11 +48,13 @@ let Ellipse = function(
             transparent: true,
             opacity: this.alpha / 256
         });
-        let circle = new Mesh(geometry, material);
-
-        this._meshes.push(circle);
-        return circle;
+        let c = new Mesh(geometry, material);
+        c.position.set(this.cX, this.cY, 1);
+        c.scale.set(this.rX, this.rY, 1);
+        c.rotation.set(0, 0, this.theta);
+        return c;
     };
+    this._meshes = [this.buildMesh(), this.buildMesh()];
 
     this.getMesh = function(i) {
         if (i >= this._meshes.length) return;
@@ -63,7 +64,7 @@ let Ellipse = function(
         if (i >= this._meshes.length) return;
         let mi = this._meshes[i];
         mi.material.color = this.color;
-        mi.material.alpha = this.alpha / 256;
+        mi.material.opacity = this.alpha / 256;
         mi.position.set(this.cX, this.cY, 1);
         mi.scale.set(this.rX, this.rY, 1);
         mi.rotation.set(0, 0, this.theta);

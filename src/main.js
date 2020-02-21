@@ -266,6 +266,7 @@ function step1() {
     // Get new color
     let color = computeNewPrimitiveColor();
     currentPrimitive.setColor(color);
+    currentPrimitive.updateMesh(1);
     sceneTest.add(currentPrimitive.getMesh(1));
 
     // Next.
