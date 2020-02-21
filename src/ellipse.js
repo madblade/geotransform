@@ -91,7 +91,7 @@ let Ellipse = function(
 
 let EllipseGenerator = function(inputWidth, inputHeight)
 {
-    this.SBL = new Sobol(5);
+    this.SBL = new Sobol(4);
     this.rng = new Random('Ellipse');
     this.cxmax = inputWidth / 20;
     this.cxmin = -this.cxmax;
@@ -102,10 +102,10 @@ let EllipseGenerator = function(inputWidth, inputHeight)
     this.cyrange = this.cymax - this.cymin;
 
     this.rxmax = 2;
-    this.rxmin = 0.1;
+    this.rxmin = 0.01;
     this.rxrange = this.rxmax - this.rxmin;
 
-    this.rymax = this.rxmax;
+    this.rymax = 2;
     this.rymin = this.rxmin;
     this.ryrange = this.rymax - this.rymin;
 
@@ -127,7 +127,8 @@ let EllipseGenerator = function(inputWidth, inputHeight)
                 this.cymin + si[1] * this.cyrange,
                 this.rxmin + si[2] * this.rxrange,
                 this.rymin + si[3] * this.ryrange,
-                this.anglemin + si[4] * this.anglerange
+                0
+                // this.anglemin + si[4] * this.anglerange
             ]);
         }
         return ellipseParameters;
@@ -136,23 +137,21 @@ let EllipseGenerator = function(inputWidth, inputHeight)
     this.mutate = function(ellipse) {
         let rng = this.rng;
         let a = ellipse.alpha;
-        let m = Math.floor(rng.uniform() * 3);
+        let m = Math.floor(rng.uniform() * 2);
         let cx = ellipse.cX; let rx = ellipse.rX;
         let cy = ellipse.cY; let ry = ellipse.rY;
         let t = ellipse.theta; let c = ellipse.color;
+        let mf = 0.5;
         switch (m) {
             case 0:
-                console.log('cxy mutated');
-                cx = rng.clamp(cx + rng.normal() * this.cxrange, this.cxmin, this.cxmax);
-                cy = rng.clamp(cy + rng.normal() * this.cyrange, this.cymin, this.cymax);
+                cx = rng.clamp(cx + rng.normal() * this.cxrange * mf, this.cxmin, this.cxmax);
+                cy = rng.clamp(cy + rng.normal() * this.cyrange * mf, this.cymin, this.cymax);
                 break;
             case 1:
-                console.log('rxy mutated');
-                rx = rng.clamp(rx + rng.normal() * this.rxrange, this.rxmin, this.rxmax);
-                ry = rng.clamp(ry + rng.normal() * this.ryrange, this.rymin, this.rymax);
+                rx = rng.clamp(rx + rng.normal() * this.rxrange * mf, this.rxmin, this.rxmax);
+                ry = rng.clamp(ry + rng.normal() * this.ryrange * mf, this.rymin, this.rymax);
                 break;
             case 2:
-                console.log('alpha mutated');
                 t = rng.clamp(t + rng.normal() * rng.normal() * this.anglerange, this.anglemin, this.anglemax);
                 break;
         }

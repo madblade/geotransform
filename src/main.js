@@ -131,17 +131,17 @@ function fillBuffer(renderer, renderTarget, buffer) {
     renderer.readRenderTargetPixels(renderTarget, 0, 0, inputWidth, inputHeight, buffer);
 }
 
-function preCopyTestBufferToCurrentBuffer() {
+function dumpRenderTargetToTexture() {
     rendererTest.readRenderTargetPixels(renderTargetTest, 0, 0, inputWidth, inputHeight, bufferCurrent);
     let currentTexture = new DataTexture(bufferCurrent, inputWidth, inputHeight, RGBAFormat);
-    sceneCurrent.remove(planeCurrent);
+    sceneTest.remove(planeTest);
     let planegeom = new PlaneBufferGeometry(inputWidth / 10, inputHeight / 10, 1);
     let planemat = new MeshBasicMaterial({map: currentTexture});
     // planemat.generateMipmaps = false;
     // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping
     // planemat.minFilter = LinearFilter;
-    planeCurrent = new Mesh(planegeom, planemat);
-    sceneCurrent.add(planeCurrent);
+    planeTest = new Mesh(planegeom, planemat);
+    sceneTest.add(planeTest);
 }
 
 // Colors
@@ -227,14 +227,16 @@ function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
 // Main algorithm
 let currentPrimitive;
 let step = 0;
-let configAlpha = 128; // TODO set at 0 to let the algorithm choose.
+let configAlpha = 100;
 let generator;
 let sobol;
-let nbSobol = 10;
-let debo = true;
+let nbSobol = 64;
+let debo = false;
 let rng = new Random('Alpha');
-let maxIter = 100;
+let maxIter = 25;
 let currentIter = 0;
+let maxShapes = 200;
+let nbShapes = 0;
 const STEP0 = 0;
 const STEP1A = 1; const STEP1B = 2; const STEP1C = 3;
 const STEP2A = 4; const STEP2B = 5; const STEP2C = 6;
@@ -365,7 +367,6 @@ function step2b() {
 
 function step2c() {
     let newEnergy = _computeEnergy();
-    console.log(newEnergy);
 
     if (newEnergy < currentPrimitive.energy) {
         currentPrimitive.updateMesh(2);
@@ -393,14 +394,29 @@ function step2c() {
 }
 
 function step3() {
-    if (debo) console.log('Copy to buffer');
-    preCopyTestBufferToCurrentBuffer();
-    step++;
+    if (debo) console.log('New GeoTransform iteration!');
+    dumpRenderTargetToTexture();
+    nbShapes++;
+
+    if (nbShapes < maxShapes) {
+        sobol = generator.generateCover(nbSobol);
+        let a = configAlpha;
+        scenePrimitive.remove(currentPrimitive.getMesh(0));
+        sceneCurrent.remove(currentPrimitive.getMesh(2));
+        currentPrimitive = makeNewPrimitive(new Color(0xffffff), 0, 0, 1, 1, 0, a);
+        scenePrimitive.add(currentPrimitive.getMesh(0));
+        sceneCurrent.add(currentPrimitive.getMesh(2));
+        step = STEP1A;
+    } else {
+        step = STEP4;
+    }
 }
 
 function step4() {
-    if (debo) console.log('Go again');
-    step++;
+    if (debo) console.log('Requested Capture!');
+    isRequestingCapture = true;
+
+    step++; // = STEP0;
 }
 
 // ####################
@@ -440,23 +456,23 @@ let isRequestingCapture = false;
 let isRequestingStep = false;
 function captureFrame() {
     isRequestingCapture = false;
-    let canvas = document.getElementById('canvas-buffer-current');
+    let canvas = document.getElementById('canvas-buffer-test');
     let outputImage = document.getElementById('output-image');
     let data = canvas.toDataURL('image/png', 1);
     outputImage.setAttribute('src', data);
-    if (isRequestingStep) {
-        isRequestingStep = false;
-        switch (step) {
-            case STEP0: step0(); break;
-            case STEP1A: step1a(); break;
-            case STEP1B: step1b(); break;
-            case STEP1C: step1c(); break;
-            case STEP2A: step2a(); break;
-            case STEP2B: step2b(); break;
-            case STEP2C: step2c(); break;
-            case STEP3: step3(); break;
-            case STEP4: step4(); break;
-        }
+}
+function stepAlgorithm() {
+    // isRequestingStep = false;
+    switch (step) {
+        case STEP0: step0(); break;
+        case STEP1A: step1a(); break;
+        case STEP1B: step1b(); break;
+        case STEP1C: step1c(); break;
+        case STEP2A: step2a(); break;
+        case STEP2B: step2b(); break;
+        case STEP2C: step2c(); break;
+        case STEP3: step3(); break;
+        case STEP4: step4(); break;
     }
 }
 
@@ -467,11 +483,14 @@ function renderPass(composer, renderer, scene, camera) {
 
 function animate() {
     requestAnimationFrame(animate);
-    if (isRequestingCapture || isRequestingStep) {
+    if (isRequestingCapture) {
         captureFrame();
     }
+    if (isRequestingStep) {
+        stepAlgorithm();
+    }
     renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);
-    renderPass(composerCurrent, rendererCurrent, sceneCurrent, mainCamera);
+    // renderPass(composerCurrent, rendererCurrent, sceneCurrent, mainCamera);
     renderPass(composerTest, rendererTest, sceneTest, mainCamera);
     renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
 }
