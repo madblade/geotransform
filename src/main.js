@@ -106,7 +106,7 @@ function init() {
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight, 'img/j.png');
+    loadImage(insideWidth, insideHeight, 'img/test.png');
 
     addListeners();
 }
@@ -372,7 +372,7 @@ function step2c() {
     if (newEnergy < currentPrimitive.energy) {
         currentPrimitive.updateMesh(2);
         currentPrimitive.snapshot();
-        console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
+        // console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
         currentPrimitive.energy = newEnergy;
     } else {
         if (currentPrimitive._saved) {
@@ -401,6 +401,7 @@ function step3() {
     if (debo) console.log('New GeoTransform iteration!');
     dumpRenderTargetToTexture();
     nbShapes++;
+    isRequestingCapture = true;
 
     if (nbShapes < maxShapes) {
         sobol = generator.generateCover(nbSobol);
@@ -408,7 +409,7 @@ function step3() {
         scenePrimitive.remove(currentPrimitive.getMesh(0));
         sceneTest.remove(currentPrimitive.getMesh(1));
         // sceneCurrent.remove(currentPrimitive.getMesh(2));
-        currentPrimitive = makeNewPrimitive(new Color(0xffffff), 0, 0, 1, 1, 0, a);
+        currentPrimitive = makeNewPrimitive(new Color(0xffffff), 100, 100, 1, 1, 0, a);
         scenePrimitive.add(currentPrimitive.getMesh(0));
         sceneTest.add(currentPrimitive.getMesh(1));
         // sceneCurrent.add(currentPrimitive.getMesh(2));
@@ -419,8 +420,9 @@ function step3() {
 }
 
 function step4() {
-    if (debo) console.log('Requested Capture!');
+    if (debo) console.log('Done!');
     isRequestingCapture = true;
+    gif.render();
 
     step++; // = STEP0;
 }
@@ -460,13 +462,19 @@ function loadImage(insideWidth, insideHeight, path) {
 
 let isRequestingCapture = false;
 let isRequestingStep = false;
+let gif = new GIF({ workers: 2, quality: 10 });
 function captureFrame() {
     isRequestingCapture = false;
     let canvas = document.getElementById('canvas-buffer-test');
     let outputImage = document.getElementById('output-image');
     let data = canvas.toDataURL('image/png', 1);
     outputImage.setAttribute('src', data);
+    gif.addFrame(canvas, {delay: 100});
 }
+gif.on('finished', function(blob) {
+    window.open(URL.createObjectURL(blob));
+});
+
 function stepAlgorithm() {
     // isRequestingStep = false;
     switch (step) {
@@ -487,19 +495,17 @@ function renderPass(composer, renderer, scene, camera) {
     composer.render();
 }
 
-let mod = 0;
 function animate() {
-    ++mod;
-    mod %= 2;
     requestAnimationFrame(animate);
     if (isRequestingCapture) {
         captureFrame();
     }
-    if (isRequestingStep && mod) {
+    if (isRequestingStep) {
         stepAlgorithm();
     }
     renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);
-    // renderPass(composerCurrent, rendererCurrent, sceneCurrent, mainCamera);
     renderPass(composerTest, rendererTest, sceneTest, mainCamera);
+    renderPass(composerTest, rendererTest, sceneTest, mainCamera);
+    renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
     renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
 }
