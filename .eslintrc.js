@@ -179,7 +179,7 @@ module.exports = {
     "no-bitwise": 0,                                            //disallow use of bitwise operators
     "no-continue": 0,                                           //disallow use of the continue statement
     "no-inline-comments": 0,                                    //disallow comments inline after code
-    "no-lonely-if": 2,                                          //disallow if as the only statement in an else block
+    "no-lonely-if": 0,                                          //disallow if as the only statement in an else block
     "no-mixed-operators": 0,                                    //disallow mixes of different operators
     "no-mixed-spaces-and-tabs": 2,                              //disallow mixed spaces and tabs for indentation
     "no-multiple-empty-lines": 2,                               //disallow multiple empty lines

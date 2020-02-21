@@ -79,10 +79,13 @@ let Ellipse = function(
         this.alpha = this._snp[0];
         this.cX = this._snp[1];
         this.cY = this._snp[2];
-        this.cX = this._snp[3];
-        this.cY = this._snp[4];
+        this.rX = this._snp[3];
+        this.rY = this._snp[4];
         this.theta = this._snp[5];
         this.color = this._snp[6];
+        // Until next time.
+        this._snp = [];
+        this.saved = false;
     };
 };
 
@@ -139,15 +142,18 @@ let EllipseGenerator = function(inputWidth, inputHeight)
         let t = ellipse.theta; let c = ellipse.color;
         switch (m) {
             case 0:
-                cx = rng.clamp(cx + rng.normal() * 16, this.cxmin, this.cxmax);
-                cy = rng.clamp(cy + rng.normal() * 16, this.cymin, this.cymax);
+                console.log('cxy mutated');
+                cx = rng.clamp(cx + rng.normal() * this.cxrange, this.cxmin, this.cxmax);
+                cy = rng.clamp(cy + rng.normal() * this.cyrange, this.cymin, this.cymax);
                 break;
             case 1:
-                rx = rng.clamp(rx + rng.normal() * 16, this.rxmin, this.rxmax);
-                ry = rng.clamp(ry + rng.normal() * 16, this.rymin, this.rymax);
+                console.log('rxy mutated');
+                rx = rng.clamp(rx + rng.normal() * this.rxrange, this.rxmin, this.rxmax);
+                ry = rng.clamp(ry + rng.normal() * this.ryrange, this.rymin, this.rymax);
                 break;
             case 2:
-                t = rng.clamp(t + rng.normal() * 32, this.anglemin, this.anglemax);
+                console.log('alpha mutated');
+                t = rng.clamp(t + rng.normal() * rng.normal() * this.anglerange, this.anglemin, this.anglemax);
                 break;
         }
         ellipse.updateModel(cx, cy, rx, ry, t, c, a);

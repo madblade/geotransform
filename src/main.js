@@ -230,8 +230,16 @@ let step = 0;
 let configAlpha = 128; // TODO set at 0 to let the algorithm choose.
 let generator;
 let sobol;
+let nbSobol = 10;
 let debo = true;
 let rng = new Random('Alpha');
+let maxIter = 100;
+let currentIter = 0;
+const STEP0 = 0;
+const STEP1A = 1; const STEP1B = 2; const STEP1C = 3;
+const STEP2A = 4; const STEP2B = 5; const STEP2C = 6;
+const STEP3 = 7; const STEP4 = 8;
+
 function step0() {
     if (debo) console.log('Step 1');
     initBuffers();
@@ -252,7 +260,7 @@ function step0() {
 
     // Pre-sampling.
     generator = new EllipseGenerator(inputWidth, inputHeight);
-    sobol = generator.generateCover(100);
+    sobol = generator.generateCover(nbSobol);
     currentPrimitive = makeNewPrimitive(
         new Color(0xffffff),
         0, 0,
@@ -263,12 +271,12 @@ function step0() {
     sceneCurrent.add(currentPrimitive.getMesh(2));
 
     // Next.
-    step++;
+    step = STEP1A;
     step1a();
 }
 
 function step1a() {
-    if (debo) console.log('Step 1A');
+    if (debo) console.log(`Sobol iteration ${nbSobol - sobol.length}`);
 
     let nextPrimitive = sobol.shift();
     let a = configAlpha === 0 ?
@@ -286,30 +294,27 @@ function step1a() {
     sceneTest.remove(currentPrimitive.getMesh(1));
 
     // Wait for render.
-    step++;
+    step = STEP1B;
 }
 
-function step1b() {
-    if (debo) console.log('Step 1B');
-
+function _computeColor() {
     // Get rasters
     fillBuffer(rendererPrimitive, renderTargetPrimitive, bufferPrimitive);
     fillBuffer(rendererTest, renderTargetTest, bufferTest);
 
     // Get new color
-    let color = computeNewPrimitiveColor(configAlpha);
-    console.log(color);
+    let color = computeNewPrimitiveColor(currentPrimitive.alpha);
     currentPrimitive.setColor(color);
     currentPrimitive.updateMesh(1);
     sceneTest.add(currentPrimitive.getMesh(1));
-
-    // Next.
-    step++;
 }
 
-function step2() {
-    if (debo) console.log('Step 2');
+function step1b() {
+    _computeColor();
+    step = STEP1C;
+}
 
+function _computeEnergy() {
     // Update rasters
     // fillBuffer(rendererCurrent, renderTargetCurrent, bufferCurrent);
     fillBuffer(rendererTest, renderTargetTest, bufferTest);
@@ -317,6 +322,11 @@ function step2() {
     // Compute Energy
     // let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
     let newEnergy = computeBufferDistance(bufferTarget, bufferTest);
+    return newEnergy;
+}
+
+function step1c() {
+    let newEnergy = _computeEnergy();
 
     if (newEnergy < currentPrimitive.energy) {
         currentPrimitive.updateMesh(2);
@@ -325,23 +335,71 @@ function step2() {
         currentPrimitive.energy = newEnergy;
     }
 
-    // Next.
     if (sobol.length > 0) {
-        step = 1;
+        step = STEP1A;
+    } else {
+        if (currentPrimitive._saved)
+            currentPrimitive.rollback();
+
+        if (debo) console.log('==== SOBOL done ====');
+        currentPrimitive.snapshot();
+        step = STEP2A;
+        currentIter = 0;
     }
-    else step++;
+}
+
+function step2a() {
+    if (debo) console.log(`HillClimb iteration ${currentIter}`);
+
+    generator.mutate(currentPrimitive);
+    currentPrimitive.updateMesh(0);
+    sceneTest.remove(currentPrimitive.getMesh(1));
+
+    step = STEP2B;
+}
+
+function step2b() {
+    _computeColor();
+    step = STEP2C;
+}
+
+function step2c() {
+    let newEnergy = _computeEnergy();
+    console.log(newEnergy);
+
+    if (newEnergy < currentPrimitive.energy) {
+        currentPrimitive.updateMesh(2);
+        currentPrimitive.snapshot();
+        if (debo) console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
+        currentPrimitive.energy = newEnergy;
+    } else {
+        if (currentPrimitive._saved) {
+            currentPrimitive.rollback();
+            currentPrimitive.snapshot();
+        }
+    }
+
+    if (currentIter < maxIter) {
+        currentIter++;
+        step = STEP2A;
+    } else {
+        if (currentPrimitive._saved)
+            currentPrimitive.rollback();
+
+        if (debo) console.log('==== HILLCLIMB done ====');
+        step++;
+        currentIter = 0;
+    }
 }
 
 function step3() {
-    if (debo) console.log('Step 3');
-
-    step++;
-    // TODO HillClimb
-    // TODO StepLoop
+    if (debo) console.log('Copy to buffer');
     preCopyTestBufferToCurrentBuffer();
+    step++;
 }
+
 function step4() {
-    if (debo) console.log('Step 4');
+    if (debo) console.log('Go again');
     step++;
 }
 
@@ -389,12 +447,15 @@ function captureFrame() {
     if (isRequestingStep) {
         isRequestingStep = false;
         switch (step) {
-            case 0: step0(); break;
-            case 1: step1a(); break;
-            case 2: step1b(); break;
-            case 3: step2(); break;
-            case 4: step3(); break;
-            case 5: step4(); break;
+            case STEP0: step0(); break;
+            case STEP1A: step1a(); break;
+            case STEP1B: step1b(); break;
+            case STEP1C: step1c(); break;
+            case STEP2A: step2a(); break;
+            case STEP2B: step2b(); break;
+            case STEP2C: step2c(); break;
+            case STEP3: step3(); break;
+            case STEP4: step4(); break;
         }
     }
 }
