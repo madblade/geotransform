@@ -8,12 +8,12 @@ import {
     LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
     // ShaderPass, EffectComposer, RenderPass
 } from 'three';
-import makeEllipse, {Ellipse} from './ellipse';
+import {Ellipse} from './ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
-import {Random} from './random';
+import {Random, Sobol} from './random';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -45,6 +45,7 @@ let planeTest;
 let background;
 
 let RNG = new Random('baboulinet');
+let SBL = new Sobol(6);
 
 init();
 animate();
@@ -111,6 +112,8 @@ function init() {
     loadImage(insideWidth, insideHeight);
 
     addListeners();
+
+    console.log(SBL.generate(10));
 }
 
 // Buffers
@@ -286,6 +289,8 @@ function step2() {
 }
 function step3() {
     step++;
+    // TODO HillClimb
+    // TODO StepLoop
     preCopyTestBufferToCurrentBuffer();
 }
 function step4() {

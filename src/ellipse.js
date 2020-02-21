@@ -1,12 +1,14 @@
 import {
-    CircleBufferGeometry, Color, Mesh, MeshBasicMaterial
+    CircleBufferGeometry, Color,
+    Mesh, MeshBasicMaterial
 } from 'three';
 
-var Ellipse = function(
+let Ellipse = function(
     rng,
     cX, cY, rX, rY,
     theta, color
 ) {
+    // Constructor
     this.alpha = 128;
     this.cX = cX;
     this.cY = cY;
@@ -14,8 +16,7 @@ var Ellipse = function(
     this.rY = rY;
     this.theta = theta;
     this.color = color;
-
-    this._meshes = [];
+    this._meshes = [this.buildMesh(), this.buildMesh()];
 
     this.mutate = function() {
         let a = this.alpha;
@@ -38,38 +39,41 @@ var Ellipse = function(
 
     this.setColor = function(newColor) {
         this.color = newColor;
-        if (this._meshes.length < 1) return;
-        for (let i = 0; i < this._meshes.length; ++i) {
-            this._meshes[i].material.color = newColor;
-        }
     };
 
     // Drawing
-    this.getMesh = function(which) {
-        switch (which) {
-            case 0:
-                if (this._meshes.length > 0) return this._meshes[0];
-                break;
-            case 1:
-                if (this._meshes.length > 1) return this._meshes[1];
-                if (this._meshes.length < 1) return null;
-                break;
-            default: return;
-        }
-
+    this.buildMesh = function() {
         let geometry = new CircleBufferGeometry(5, 32);
         let material = new MeshBasicMaterial({
             color: this.color,
             transparent: true,
-            opacity: 0.5
+            opacity: this.alpha / 256
         });
         let circle = new Mesh(geometry, material);
-        circle.position.set(this.cX, this.cY, 1);
-        circle.scale.set(this.rX, this.rY, 1);
-        circle.rotation.set(0, 0, this.theta);
 
         this._meshes.push(circle);
         return circle;
+    };
+
+    this.getMesh = function(i) {
+        if (i >= this._meshes.length) return;
+        return this._meshes[i];
+    };
+    this.updateMesh = function(i) {
+        if (i >= this._meshes.length) return;
+        let mi = this._meshes[i];
+        mi.material.color = this.color;
+        mi.material.alpha = this.alpha / 256;
+        mi.position.set(this.cX, this.cY, 1);
+        mi.scale.set(this.rX, this.rY, 1);
+        mi.rotation.set(0, 0, this.theta);
+    };
+
+    this.updateMeshes = function() {
+        if (this._meshes.length < 2) return;
+        for (let i = 0; i < this._meshes.length; ++i) {
+            this.updateMesh(i);
+        }
     };
 
     // Annealing
