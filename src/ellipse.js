@@ -1,11 +1,10 @@
 import {
-    CircleBufferGeometry, Color,
+    CircleBufferGeometry,
     Mesh, MeshBasicMaterial
 } from 'three';
-import {Sobol} from './random';
+import {Random, Sobol} from './random';
 
 let Ellipse = function(
-    rng,
     cX, cY, rX, rY,
     theta, color
 ) {
@@ -18,23 +17,12 @@ let Ellipse = function(
     this.theta = theta;
     this.color = color;
 
-    this.mutate = function() {
-        let a = this.alpha;
-        this.alpha = rng.clamp(a + Math.floor(rng.uniform() * 21) - 10, 1, 255);
-        let m = Math.floor(rng.uniform() * 3);
-        switch (m) {
-            case 0:
-                this.cX = rng.clamp(this.cX + rng.normal() * 16, 0, 4); // TODO see where it goes
-                this.cY = rng.clamp(this.cY + rng.normal() * 16, 0, 4);
-                break;
-            case 1:
-                this.rX = rng.clamp(this.rX + rng.normal() * 16, 0, 2); // TODO see where it goes
-                this.rY = rng.clamp(this.rY + rng.normal() * 16, 0, 2);
-                break;
-            case 2:
-                this.theta = this.theta + rng.normal() * 32;
-                break;
-        }
+    this.updateModel = function(cx, cy, rx, ry, th, cl, alpha)
+    {
+        this.cX = cx; this.cY = cy; this.rX = rx; this.rY = ry;
+        this.alpha = alpha;
+        this.color = cl;
+        this.theta = th;
     };
 
     this.setColor = function(newColor) {
@@ -100,6 +88,7 @@ let Ellipse = function(
 let EllipseGenerator = function(inputHeight, inputWidth)
 {
     this.SBL = new Sobol(6);
+    this.rng = new Random('Ellipse');
     this.cxmax = inputWidth / 20;
     this.cxmin = -this.cxmax;
     this.cxrange = this.cxmax - this.cxmin;
@@ -121,7 +110,7 @@ let EllipseGenerator = function(inputHeight, inputWidth)
     this.alpharange = this.alphamax - this.alphamin;
 
     this.anglemin = 0;
-    this.anglemax = Math.PI / 2;
+    this.anglemax = Math.PI;
     this.anglerange = this.anglemax - this.anglemin;
 
     this.generateCover = function(nbEllipse) {
@@ -139,6 +128,30 @@ let EllipseGenerator = function(inputHeight, inputWidth)
             );
         }
         return ellipseParameters;
+    };
+
+    this.mutate = function(ellipse) {
+        let rng = this.rng;
+        let a = ellipse.alpha;
+        a = rng.clamp(a + Math.floor(rng.uniform() * 21) - 10, 1, 255);
+        let m = Math.floor(rng.uniform() * 3);
+        let cx = ellipse.cX; let rx = ellipse.rX;
+        let cy = ellipse.cY; let ry = ellipse.rY;
+        let t = ellipse.theta; let c = ellipse.color;
+        switch (m) {
+            case 0:
+                cx = rng.clamp(cx + rng.normal() * 16, this.cxmin, this.cxmax);
+                cy = rng.clamp(cy + rng.normal() * 16, this.cymin, this.cymax);
+                break;
+            case 1:
+                rx = rng.clamp(rx + rng.normal() * 16, this.rxmin, this.rxmax);
+                ry = rng.clamp(ry + rng.normal() * 16, this.rymin, this.rymax);
+                break;
+            case 2:
+                t = rng.clamp(t + rng.normal() * 32, this.anglemin, this.anglemax);
+                break;
+        }
+        ellipse.updateModel(cx, cy, rx, ry, t, c, a);
     };
 };
 

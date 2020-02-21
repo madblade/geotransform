@@ -27,9 +27,9 @@ let Random = function(textSeed)
         };
     }
 
-    var seed1 = xmur3(textSeed + 'h2g2');
-    var seed2 = xmur3(textSeed + 'DouglasAdams');
-    var seed3 = xmur3(textSeed + '42');
+    var seed1 = xmur3(`${textSeed}h2g2`);
+    var seed2 = xmur3(`${textSeed}DouglasAdams`);
+    var seed3 = xmur3(`${textSeed}42`);
     var rand1 = sfc32(seed1(), seed1(), seed1(), seed1());
     var rand2 = sfc32(seed2(), seed2(), seed2(), seed2());
     var rand3 = sfc32(seed3(), seed3(), seed3(), seed3());
@@ -44,7 +44,7 @@ let Random = function(textSeed)
 
     /**
      * Normal distribution generator.
-     * @returns number number in [0, 1] (centered in 0.5)
+     * @returns number number in [-1, 1] (mean 0)
      */
     this.normal = function()
     {
@@ -54,7 +54,7 @@ let Random = function(textSeed)
         let n = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
         n = n / 10.0 + 0.5;
         if (n > 1 || n < 0) return this.normal();
-        return n;
+        return n * 2 - 1;
     };
 
     this.clamp = function(n, min, max) {
@@ -133,6 +133,11 @@ let Sobol = function(dimension)
         }
     }
 
+    // Skip first trivial sieving
+    this.rng = new Random('Sobol');
+    let nbToSkip = Math.floor(10 + dimension * 10 * this.rng.uniform());
+
+    for (let j = 0; j < nbToSkip; ++j) this.next();
     this.generate = function(num) {
         var draws = [];
         for (let j = 0; j < num; ++j) draws.push(this.next());

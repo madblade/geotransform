@@ -13,7 +13,6 @@ import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
-import {Random, Sobol} from './random';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -43,9 +42,6 @@ let planeTarget;
 let planeCurrent;
 let planeTest;
 let background;
-
-let RNG = new Random('baboulinet');
-let SBL = new Sobol(6);
 
 init();
 animate();
@@ -112,8 +108,6 @@ function init() {
     loadImage(insideWidth, insideHeight);
 
     addListeners();
-
-    console.log(SBL.generate(10));
 }
 
 // Buffers
@@ -223,7 +217,7 @@ function makeBackground(color) {
 }
 
 function makeNewPrimitive(color, cx, cy, rx, ry, angle) {
-    let e = new Ellipse(RNG,
+    let e = new Ellipse(
         cx, cy, rx, ry, angle, color
     );
     return e;

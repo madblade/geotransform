@@ -49,7 +49,7 @@ module.exports = {
     // "curly": [2, "multi-line"],                                 //specify curly brace conventions for all control statements
     "default-case": 0,                                          //require default case in switch statements
     "dot-location": [2, "property"],                            //enforces consistent newlines before or after dots
-    "dot-notation": 2,                                          //encourages use of dot notation whenever possible
+    "dot-notation": 0,                                          //encourages use of dot notation whenever possible
     "eqeqeq": 0,                                                //require the use of === and !==
     "guard-for-in": 0,                                          //make sure for-in loops have an if statement
     "no-alert": 2,                                              //disallow the use of alert, confirm, and prompt
