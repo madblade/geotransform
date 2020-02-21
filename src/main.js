@@ -8,11 +8,12 @@ import {
     LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
     // ShaderPass, EffectComposer, RenderPass
 } from 'three';
-import {Ellipse} from './ellipse';
+import {Ellipse, EllipseGenerator} from './ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
+import {Random} from './random';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -138,7 +139,7 @@ function preCopyTestBufferToCurrentBuffer() {
     let planemat = new MeshBasicMaterial({map: currentTexture});
     // planemat.generateMipmaps = false;
     // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping
-    // planemat.minFilter = LinearFilter;à
+    // planemat.minFilter = LinearFilter;
     planeCurrent = new Mesh(planegeom, planemat);
     sceneCurrent.add(planeCurrent);
 }
@@ -155,12 +156,12 @@ function computeBackgroundColorOutput() {
     r /= tot;
     g /= tot;
     b /= tot;
-    return new Color(r, g, b);
+    return new Color(r / 256, g / 256, b / 256);
 }
 
-function computeNewPrimitiveColor() {
+function computeNewPrimitiveColor(alpha) {
     // Scan / intestect and compute optimal color
-    let alpha = 128;
+    // let alpha = 128;
     let a = 0x101 * 255 / alpha;
     let rsum = 0; let gsum = 0; let bsum = 0;
     // let nbOut = 0;
@@ -182,9 +183,9 @@ function computeNewPrimitiveColor() {
         nbIn++;
     }
     let c = new Color(
-        clamp((rsum / nbIn) >> 8, 0, 255),
-        clamp((gsum / nbIn) >> 8, 0, 255),
-        clamp((bsum / nbIn) >> 8, 0, 255),
+        clamp((rsum / nbIn) >> 8, 0, 255) / 256,
+        clamp((gsum / nbIn) >> 8, 0, 255) / 256,
+        clamp((bsum / nbIn) >> 8, 0, 255) / 256,
     );
     return c;
 }
@@ -216,9 +217,9 @@ function makeBackground(color) {
     // sceneTarget.remove(planeTarget);
 }
 
-function makeNewPrimitive(color, cx, cy, rx, ry, angle) {
+function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
     let e = new Ellipse(
-        cx, cy, rx, ry, angle, color
+        cx, cy, rx, ry, angle, color, alpha
     );
     return e;
 }
@@ -226,15 +227,22 @@ function makeNewPrimitive(color, cx, cy, rx, ry, angle) {
 // Main algorithm
 let currentPrimitive;
 let step = 0;
+let configAlpha = 128; // TODO set at 0 to let the algorithm choose.
+let generator;
+let sobol;
+let debo = true;
+let rng = new Random('Alpha');
 function step0() {
+    if (debo) console.log('Step 1');
     initBuffers();
 
     // Get rendered picture into TargetBuffer
     fillBuffer(rendererTarget, renderTargetTarget, bufferTarget);
 
-    // Init CurrentScene with background
+    // Compute background color
     let color = computeBackgroundColorOutput();
 
+    // Init CurrentScene with background
     planeCurrent = makeBackground(color);
     sceneCurrent.add(planeCurrent);
 
@@ -242,58 +250,98 @@ function step0() {
     planeTest = makeBackground(color);
     sceneTest.add(planeTest);
 
-    // Init PrimitiveScene with ellipse
-    // let randColor = new Color(Math.random() * 0xffffff);
-    let randColor = new Color(0xffffff);
+    // Pre-sampling.
+    generator = new EllipseGenerator(inputWidth, inputHeight);
+    sobol = generator.generateCover(100);
     currentPrimitive = makeNewPrimitive(
-        randColor,
-        3, 3,
-        1, 0.5,
-        0,
+        new Color(0xffffff),
+        0, 0,
+        1, 1,
+        0, configAlpha
     );
     scenePrimitive.add(currentPrimitive.getMesh(0));
+    sceneCurrent.add(currentPrimitive.getMesh(2));
 
     // Next.
     step++;
+    step1a();
 }
-function step1() {
+
+function step1a() {
+    if (debo) console.log('Step 1A');
+
+    let nextPrimitive = sobol.shift();
+    let a = configAlpha === 0 ?
+        rng.clamp(configAlpha + Math.floor(rng.uniform() * 21) - 10, 1, 255) :
+        configAlpha;
+
+    currentPrimitive.updateModel(
+        nextPrimitive[0], nextPrimitive[1],
+        nextPrimitive[2], nextPrimitive[3],
+        nextPrimitive[4],
+        new Color(0xffffff),
+        a
+    );
+    currentPrimitive.updateMesh(0);
+    sceneTest.remove(currentPrimitive.getMesh(1));
+
+    // Wait for render.
+    step++;
+}
+
+function step1b() {
+    if (debo) console.log('Step 1B');
+
     // Get rasters
     fillBuffer(rendererPrimitive, renderTargetPrimitive, bufferPrimitive);
     fillBuffer(rendererTest, renderTargetTest, bufferTest);
 
     // Get new color
-    let color = computeNewPrimitiveColor();
+    let color = computeNewPrimitiveColor(configAlpha);
     console.log(color);
     currentPrimitive.setColor(color);
-    currentPrimitive.updateMeshes();
+    currentPrimitive.updateMesh(1);
     sceneTest.add(currentPrimitive.getMesh(1));
 
     // Next.
     step++;
 }
+
 function step2() {
+    if (debo) console.log('Step 2');
+
     // Update rasters
-    fillBuffer(rendererCurrent, renderTargetCurrent, bufferCurrent);
+    // fillBuffer(rendererCurrent, renderTargetCurrent, bufferCurrent);
     fillBuffer(rendererTest, renderTargetTest, bufferTest);
 
     // Compute Energy
-    let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
-    let dTest = computeBufferDistance(bufferTarget, bufferTest);
+    // let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
+    let newEnergy = computeBufferDistance(bufferTarget, bufferTest);
 
-    console.log('test');
-    console.log(dCurrent);
-    console.log(dTest);
+    if (newEnergy < currentPrimitive.energy) {
+        currentPrimitive.updateMesh(2);
+        currentPrimitive.snapshot();
+        if (debo) console.log(`New energy: ${newEnergy}`);
+        currentPrimitive.energy = newEnergy;
+    }
 
     // Next.
-    step++;
+    if (sobol.length > 0) {
+        step = 1;
+    }
+    else step++;
 }
+
 function step3() {
+    if (debo) console.log('Step 3');
+
     step++;
     // TODO HillClimb
     // TODO StepLoop
     preCopyTestBufferToCurrentBuffer();
 }
 function step4() {
+    if (debo) console.log('Step 4');
     step++;
 }
 
@@ -342,10 +390,11 @@ function captureFrame() {
         isRequestingStep = false;
         switch (step) {
             case 0: step0(); break;
-            case 1: step1(); break;
-            case 2: step2(); break;
-            case 3: step3(); break;
-            case 4: step4(); break;
+            case 1: step1a(); break;
+            case 2: step1b(); break;
+            case 3: step2(); break;
+            case 4: step3(); break;
+            case 5: step4(); break;
         }
     }
 }

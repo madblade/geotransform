@@ -43,7 +43,7 @@ let Ellipse = function(
         c.rotation.set(0, 0, this.theta);
         return c;
     };
-    this._meshes = [this.buildMesh(), this.buildMesh()];
+    this._meshes = [this.buildMesh(), this.buildMesh(), this.buildMesh()];
 
     this.getMesh = function(i) {
         if (i >= this._meshes.length) return;
@@ -60,7 +60,7 @@ let Ellipse = function(
     };
 
     this.updateMeshes = function() {
-        if (this._meshes.length < 2) return;
+        if (this._meshes.length < 1) return;
         for (let i = 0; i < this._meshes.length; ++i) {
             this.updateMesh(i);
         }
@@ -69,6 +69,7 @@ let Ellipse = function(
     // Annealing
     this._saved = false;
     this._snp = [];
+    this.energy = Number.POSITIVE_INFINITY;
     this.snapshot = function() {
         this._snp = [this.alpha, this.cX, this.cY, this.rX, this.rY, this.theta, this.color];
         this._saved = true;
@@ -85,9 +86,9 @@ let Ellipse = function(
     };
 };
 
-let EllipseGenerator = function(inputHeight, inputWidth)
+let EllipseGenerator = function(inputWidth, inputHeight)
 {
-    this.SBL = new Sobol(6);
+    this.SBL = new Sobol(5);
     this.rng = new Random('Ellipse');
     this.cxmax = inputWidth / 20;
     this.cxmin = -this.cxmax;
@@ -105,9 +106,9 @@ let EllipseGenerator = function(inputHeight, inputWidth)
     this.rymin = this.rxmin;
     this.ryrange = this.rymax - this.rymin;
 
-    this.alphamin = 0.05;
-    this.alphamax = 1;
-    this.alpharange = this.alphamax - this.alphamin;
+    // this.alphamin = 0.05;
+    // this.alphamax = 1;
+    // this.alpharange = this.alphamax - this.alphamin;
 
     this.anglemin = 0;
     this.anglemax = Math.PI;
@@ -118,14 +119,13 @@ let EllipseGenerator = function(inputHeight, inputWidth)
         let ellipseParameters = [];
         for (let i = 0; i < sobol.length; ++i) {
             let si = sobol[i];
-            ellipseParameters.push(
+            ellipseParameters.push([
                 this.cxmin + si[0] * this.cxrange,
                 this.cymin + si[1] * this.cyrange,
                 this.rxmin + si[2] * this.rxrange,
                 this.rymin + si[3] * this.ryrange,
-                this.alphamin + si[4] * this.alpharange,
-                this.anglemin + si[5] * this.anglerange,
-            );
+                this.anglemin + si[4] * this.anglerange
+            ]);
         }
         return ellipseParameters;
     };
@@ -133,7 +133,6 @@ let EllipseGenerator = function(inputHeight, inputWidth)
     this.mutate = function(ellipse) {
         let rng = this.rng;
         let a = ellipse.alpha;
-        a = rng.clamp(a + Math.floor(rng.uniform() * 21) - 10, 1, 255);
         let m = Math.floor(rng.uniform() * 3);
         let cx = ellipse.cX; let rx = ellipse.rX;
         let cy = ellipse.cY; let ry = ellipse.rY;
