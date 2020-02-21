@@ -2,6 +2,7 @@ import {
     CircleBufferGeometry, Color,
     Mesh, MeshBasicMaterial
 } from 'three';
+import {Sobol} from './random';
 
 let Ellipse = function(
     rng,
@@ -96,4 +97,49 @@ let Ellipse = function(
     };
 };
 
-export { Ellipse };
+let EllipseGenerator = function(inputHeight, inputWidth)
+{
+    this.SBL = new Sobol(6);
+    this.cxmax = inputWidth / 20;
+    this.cxmin = -this.cxmax;
+    this.cxrange = this.cxmax - this.cxmin;
+
+    this.cymax = inputHeight / 20;
+    this.cymin = -this.cymax;
+    this.cyrange = this.cymax - this.cymin;
+
+    this.rxmax = 2;
+    this.rxmin = 0.1;
+    this.rxrange = this.rxmax - this.rxmin;
+
+    this.rymax = this.rxmax;
+    this.rymin = this.rxmin;
+    this.ryrange = this.rymax - this.rymin;
+
+    this.alphamin = 0.05;
+    this.alphamax = 1;
+    this.alpharange = this.alphamax - this.alphamin;
+
+    this.anglemin = 0;
+    this.anglemax = Math.PI / 2;
+    this.anglerange = this.anglemax - this.anglemin;
+
+    this.generateCover = function(nbEllipse) {
+        let sobol = this.SBL.generate(nbEllipse);
+        let ellipseParameters = [];
+        for (let i = 0; i < sobol.length; ++i) {
+            let si = sobol[i];
+            ellipseParameters.push(
+                this.cxmin + si[0] * this.cxrange,
+                this.cymin + si[1] * this.cyrange,
+                this.rxmin + si[2] * this.rxrange,
+                this.rymin + si[3] * this.ryrange,
+                this.alphamin + si[4] * this.alpharange,
+                this.anglemin + si[5] * this.anglerange,
+            );
+        }
+        return ellipseParameters;
+    };
+};
+
+export { Ellipse, EllipseGenerator };

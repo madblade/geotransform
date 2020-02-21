@@ -222,10 +222,9 @@ function makeBackground(color) {
     // sceneTarget.remove(planeTarget);
 }
 
-function makeNewPrimitive(color) {
+function makeNewPrimitive(color, cx, cy, rx, ry, angle) {
     let e = new Ellipse(RNG,
-        2, 4,
-        1, 0.5, Math.PI / 8, color
+        cx, cy, rx, ry, angle, color
     );
     return e;
 }
@@ -252,7 +251,12 @@ function step0() {
     // Init PrimitiveScene with ellipse
     // let randColor = new Color(Math.random() * 0xffffff);
     let randColor = new Color(0xffffff);
-    currentPrimitive = makeNewPrimitive(randColor);
+    currentPrimitive = makeNewPrimitive(
+        randColor,
+        3, 3,
+        1, 0.5,
+        0,
+    );
     scenePrimitive.add(currentPrimitive.getMesh(0));
 
     // Next.
@@ -265,8 +269,9 @@ function step1() {
 
     // Get new color
     let color = computeNewPrimitiveColor();
+    console.log(color);
     currentPrimitive.setColor(color);
-    currentPrimitive.updateMesh(1);
+    currentPrimitive.updateMeshes();
     sceneTest.add(currentPrimitive.getMesh(1));
 
     // Next.
