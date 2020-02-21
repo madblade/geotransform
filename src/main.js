@@ -25,7 +25,7 @@ let mainCamera;
 let inputWidth;
 let inputHeight;
 let rendererTarget;
-let rendererCurrent;
+// let rendererCurrent;
 let rendererTest;
 let rendererPrimitive;
 
@@ -35,7 +35,7 @@ let sceneTest;
 let scenePrimitive;
 
 let renderTargetTarget; let composerTarget;
-let renderTargetCurrent; let composerCurrent;
+// let renderTargetCurrent; let composerCurrent;
 let renderTargetTest; let composerTest;
 let renderTargetPrimitive; let composerPrimitive;
 
@@ -78,12 +78,12 @@ function init() {
 
     // renderer
     rendererTarget = newRenderer('buffer-target');
-    rendererCurrent = newRenderer('buffer-current');
+    // rendererCurrent = newRenderer('buffer-current');
     rendererTest = newRenderer('buffer-test');
     rendererPrimitive = newRenderer('buffer-primitive');
 
     renderTargetTarget = new WebGLRenderTarget(inputWidth, inputHeight);
-    renderTargetCurrent = new WebGLRenderTarget(inputWidth, inputHeight);
+    // renderTargetCurrent = new WebGLRenderTarget(inputWidth, inputHeight);
     renderTargetTest = new WebGLRenderTarget(inputWidth, inputHeight);
     renderTargetPrimitive = new WebGLRenderTarget(inputWidth, inputHeight);
 
@@ -101,12 +101,12 @@ function init() {
 
     // FXAA
     composerTarget = newComposer(rendererTarget, sceneTarget, mainCamera, renderTargetTarget);
-    composerCurrent = newComposer(rendererCurrent, sceneCurrent, mainCamera, renderTargetCurrent);
+    // composerCurrent = newComposer(rendererCurrent, sceneCurrent, mainCamera, renderTargetCurrent);
     composerTest = newComposer(rendererTest, sceneTest, mainCamera, renderTargetTest);
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight);
+    loadImage(insideWidth, insideHeight, 'img/j.png');
 
     addListeners();
 }
@@ -250,6 +250,7 @@ function step0() {
     fillBuffer(rendererTarget, renderTargetTarget, bufferTarget);
 
     // Compute background color
+    // let color = new Color(0xffffff);
     let color = computeBackgroundColorOutput();
 
     // Init CurrentScene with background
@@ -371,7 +372,7 @@ function step2c() {
     if (newEnergy < currentPrimitive.energy) {
         currentPrimitive.updateMesh(2);
         currentPrimitive.snapshot();
-        if (debo) console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
+        console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
         currentPrimitive.energy = newEnergy;
     } else {
         if (currentPrimitive._saved) {
@@ -384,8 +385,11 @@ function step2c() {
         currentIter++;
         step = STEP2A;
     } else {
-        if (currentPrimitive._saved)
+        if (currentPrimitive._saved) {
             currentPrimitive.rollback();
+            currentPrimitive.updateMesh(0);
+            currentPrimitive.updateMesh(1);
+        }
 
         if (debo) console.log('==== HILLCLIMB done ====');
         step++;
@@ -402,10 +406,12 @@ function step3() {
         sobol = generator.generateCover(nbSobol);
         let a = configAlpha;
         scenePrimitive.remove(currentPrimitive.getMesh(0));
-        sceneCurrent.remove(currentPrimitive.getMesh(2));
+        sceneTest.remove(currentPrimitive.getMesh(1));
+        // sceneCurrent.remove(currentPrimitive.getMesh(2));
         currentPrimitive = makeNewPrimitive(new Color(0xffffff), 0, 0, 1, 1, 0, a);
         scenePrimitive.add(currentPrimitive.getMesh(0));
-        sceneCurrent.add(currentPrimitive.getMesh(2));
+        sceneTest.add(currentPrimitive.getMesh(1));
+        // sceneCurrent.add(currentPrimitive.getMesh(2));
         step = STEP1A;
     } else {
         step = STEP4;
@@ -441,8 +447,8 @@ function addListeners() {
     });
 }
 
-function loadImage(insideWidth, insideHeight) {
-    let map = new TextureLoader().load('img/test.png');
+function loadImage(insideWidth, insideHeight, path) {
+    let map = new TextureLoader().load(path);
     map.generateMipmaps = false;
     map.wrapS = map.wrapT = ClampToEdgeWrapping;
     map.minFilter = LinearFilter;
@@ -481,12 +487,15 @@ function renderPass(composer, renderer, scene, camera) {
     composer.render();
 }
 
+let mod = 0;
 function animate() {
+    ++mod;
+    mod %= 2;
     requestAnimationFrame(animate);
     if (isRequestingCapture) {
         captureFrame();
     }
-    if (isRequestingStep) {
+    if (isRequestingStep && mod) {
         stepAlgorithm();
     }
     renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);

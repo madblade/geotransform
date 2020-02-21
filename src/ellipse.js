@@ -85,7 +85,7 @@ let Ellipse = function(
         this.color = this._snp[6];
         // Until next time.
         this._snp = [];
-        this.saved = false;
+        this._saved = false;
     };
 };
 
