@@ -1,39 +1,67 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
-    mode: 'development',
     entry: './src/main.js',
+
+    plugins: [
+        new CleanWebpackPlugin(),
+        new HtmlWebpackPlugin({
+            template: './src/index.html',
+            favicon: './src/img/favicon.ico'
+        }),
+        new webpack.HotModuleReplacementPlugin()
+    ],
 
     output: {
         path: path.resolve(__dirname, './dist'),
-        publicPath: '/dist/',
-        filename: 'build.js'
+        publicPath: './',
+        filename: '[name].[hash].js'
     },
 
     module: {
         rules: [
-            // {
-            //     test: /\.js$/,
-            //     loader: 'eslint-loader',
-            //     enforce: 'pre'
-            // },
             {
                 test: /\.js$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/
-            }
-            // ,
-            // {
-            //     test: /\.glsl$/,
-            //     use: 'raw-loader'
-            // }
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader'
+                }
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.(png|svg|jpg|gif)$/,
+                use: [
+                    'file-loader',
+                ],
+            },
         ]
     },
 
-    // devtool: '#source-map',
+    // devtool: 'inline-source-map',
+
+    devServer: {
+        contentBase: 'http://localhost:9000/dist',
+        port: 9000,
+        hot: true,
+        disableHostCheck: true
+    },
 
     optimization: {
-        minimize: true
+        runtimeChunk: 'single',
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all'
+                }
+            }
+        }
     }
 };

@@ -1,4 +1,5 @@
 
+import inputImage from './img/j.png';
 import {
     WebGLRenderer,
     Scene, PerspectiveCamera,
@@ -7,17 +8,18 @@ import {
     WebGLRenderTarget, Color,
     LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
 } from 'three';
-import {Ellipse, EllipseGenerator} from './ellipse';
+import {Ellipse, EllipseGenerator} from './lib/ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
 import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass';
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
-import {Random} from './random';
-import {GIFEncoder} from './GIFEncoder';
+import {Random} from './lib/random';
+import {GIFEncoder} from './lib/GIFEncoder';
 
 // camera
 let VIEW_ANGLE = 45;
 let ASPECT = 1;
+
 let NEAR = 0.001;
 let FAR = 5000;
 
@@ -116,7 +118,7 @@ function init() {
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight, 'img/j.png');
+    loadImage(insideWidth, insideHeight, inputImage);
 
     addListeners();
 
