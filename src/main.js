@@ -510,6 +510,10 @@ function stepAlgorithm() {
     }
 }
 
+function renderPassOffscreen(composer) {
+    composer.render();
+    composer.render();
+}
 function renderPass(composer, renderer, scene, camera) {
     renderer.render(scene, camera);
     // Compose twice into renderTarget
@@ -529,12 +533,12 @@ function animate() {
         tScenePasses++;
         return;
     }
-    if (isRequestingCapture) {
-        captureFrame();
-    }
     if (isRequestingStep) {
         stepAlgorithm();
     }
-    renderPass(composerTest, rendererTest, sceneTest, mainCamera);
+    renderPassOffscreen(composerTest);
     renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
+    if (isRequestingCapture) {
+        captureFrame();
+    }
 }

@@ -8,11 +8,17 @@
 <body>
     <div class="container" id="workspace">
         <div class="row">
-            <div class="col-sm" id="input">
+            <button type="button"
+                    id="start-button"
+                    class="btn btn-secondary btn-block">Run!
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-6" id="input">
                 <h5>Input</h5>
                 <img id="input-image" src="${require(`./img/j.png`).default}"/>
             </div>
-            <div class="col-sm" id="output">
+            <div class="col-6" id="output">
                 <h5>Output</h5>
                 <img id="output-image"/>
             </div>
@@ -21,10 +27,94 @@
             <h5>Progress</h5>
         </div>
         <div class="row" id="container">
-            <div class="col-sm" id="buffer-target"></div>
-            <div class="col-sm" id="buffer-test"></div>
-            <div class="col-sm" id="buffer-primitive"></div>
+            <div class="col-6" id="buffer-target"></div>
+            <div class="col-6" id="buffer-test"></div>
         </div>
+        <div class="row">
+            <h5>Settings</h5>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <label for="text-input-image-source" class="col-form-label">Image URL</label>
+                <input class="form-control" type="text"
+                       placeholder="${require(`./img/j.png`).default}"
+                       id="text-input-image-source">
+            </div>
+            <div class="col-4" id="group-driver-buttons">
+                <label for="group-driver-buttons" class="col-form-label">Computation</label>
+                <button type="button"
+                        id="button-stop"
+                        class="btn btn-secondary btn-block">Pause computation!
+                </button>
+                <button type="button"
+                        id="button-resume"
+                        class="btn btn-secondary btn-block">Resume computation!
+                </button>
+                <button type="button"
+                        id="button-newround"
+                        class="btn btn-secondary btn-block">Continue adding shapes!
+                </button>
+            </div>
+
+            <div class="col-4">
+                <div class="form-group">
+                    <label for="number-input-shapes" class="col-form-label">Number of shapes</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="50" id="number-input-shapes">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="number-input-sobol" class="col-form-label">Sobol samples</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="64" id="number-input-sobol">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="number-input-hillclimb" class="col-form-label">Hill-Climb iterations</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="25" id="number-input-hillclimb">
+                    </div>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check-adaptive-sobol" checked>
+                    <label class="form-check-label" for="check-adaptive-sobol">
+                        Adaptive Sobol sampling
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check-capture-gif">
+                    <!-- <input class="form-check-input" type="checkbox" value="" id="check-capture-gif" disabled> -->
+                    <label class="form-check-label" for="check-capture-gif">
+                        Generate GIF
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="form-group">
+                    <label for="number-input-width" class="col-form-label">Image width</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="512" max="512" min="64"
+                               id="number-input-width">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="number-input-height" class="col-form-label">Image height</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="512" max="512" min="64"
+                               id="number-input-height">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="button"
+                        id="button-apply-settings"
+                        class="btn btn-secondary btn-block">Apply new settings!
+                </button>
+            </div>
+        </div>
+        <div id="buffer-primitive"></div>
     </div>
 </body>
 </html>

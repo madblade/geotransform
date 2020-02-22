@@ -7,3 +7,6 @@ body {
 }
 a { color: #00f; }
 h5 { margin-top: 10px; }
+#buffer-primitive { display: none; }
+#start-button { margin-top: 10px; }
+#button-apply-settings { margin: 10px 0; }
