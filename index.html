@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Geometry Transform</title>
+    <base href="https://madblade.github.io/geotransform/" />
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="shortcut icon" href="./favicon.ico"></head>
+<body>
+    <div class="container" id="workspace">
+        <div class="row">
+            <button type="button"
+                    id="button-start"
+                    class="btn btn-secondary btn-block">Run!
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-lg-6 col-12" id="input">
+                <h5>Input</h5>
+                <img id="input-image" src="./71ca13a047042bde743d9ce2a97942ef.png"/>
+            </div>
+            <div class="col-lg-6 col-12" id="output">
+                <h5>Output</h5>
+                <img id="output-image"/>
+            </div>
+        </div>
+        <div class="row">
+            <h5>Progress</h5>
+        </div>
+        <div class="row" id="container">
+            <div class="col-lg-6 col-12" id="buffer-target"></div>
+            <div class="col-lg-6 col-12" id="buffer-test"></div>
+        </div>
+        <div class="row">
+            <h5>Settings</h5>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <label for="text-input-image-source" class="col-form-label">Image URL</label>
+                <input class="form-control" type="text"
+                       placeholder="./71ca13a047042bde743d9ce2a97942ef.png"
+                       id="text-input-image-source">
+            </div>
+            <div class="col-4" id="group-driver-buttons">
+                <label for="group-driver-buttons" class="col-form-label">Computation</label>
+                <button type="button"
+                        id="button-stop"
+                        class="btn btn-secondary btn-block" disabled>Stop computation!
+                </button>
+                <button type="button"
+                        id="button-restart"
+                        class="btn btn-secondary btn-block" disabled>Restart computation!
+                </button>
+                <button type="button"
+                        id="button-resume"
+                        class="btn btn-secondary btn-block" disabled>Continue adding shapes!
+                </button>
+                <p>Note: the “Continue” option restarts with a fresh new Sobol sampling.
+                The process will be different from an uninterrupted computation!
+                The GIF capture will also restart from zero.</p>
+            </div>
+
+            <div class="col-4">
+                <div class="form-group">
+                    <label for="number-input-shapes" class="col-form-label">Number of shapes</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="200" id="number-input-shapes">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="number-input-sobol" class="col-form-label">Sobol samples</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="64" id="number-input-sobol">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="number-input-hillclimb" class="col-form-label">Hill-Climb iterations</label>
+                    <div class="">
+                        <input class="form-control" type="number" value="25" id="number-input-hillclimb">
+                    </div>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check-adaptive-sobol">
+                    <label class="form-check-label" for="check-adaptive-sobol">
+                        Amortized Sobol sampling
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check-capture-gif">
+                    <label class="form-check-label" for="check-capture-gif">
+                        Generate GIF
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="form-group" id="wrapper-shape-type">
+                    <label for="dropdown-shape">Shape type</label>
+                    <select id="dropdown-shape" class="form-control">
+                        <option selected>Ellipse</option>
+                        <option>Rectangle</option>
+                        <option>Triangle</option>
+                        <option>Rotated ellipse</option>
+                        <option>Rotated rectangle</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="button"
+                        id="button-apply-settings"
+                        class="btn btn-secondary btn-block">Apply new settings!
+                </button>
+            </div>
+        </div>
+        <div id="buffer-primitive"></div>
+    </div>
+<script type="text/javascript" src="./runtime.4f5de551681d38eaab39.js"></script><script type="text/javascript" src="./vendors.4f5de551681d38eaab39.js"></script><script type="text/javascript" src="./main.4f5de551681d38eaab39.js"></script></body>
+</html>
