@@ -3,13 +3,14 @@
 <head>
     <title>Geometry Transform</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 </head>
 <body>
     <div class="container" id="workspace">
         <div class="row">
             <button type="button"
-                    id="start-button"
+                    id="button-start"
                     class="btn btn-secondary btn-block">Run!
             </button>
         </div>
@@ -47,15 +48,15 @@
                         class="btn btn-secondary btn-block">Stop computation!
                 </button>
                 <button type="button"
-                        id="button-resume"
+                        id="button-restart"
                         class="btn btn-secondary btn-block">Restart computation!
                 </button>
                 <button type="button"
-                        id="button-newround"
+                        id="button-resume"
                         class="btn btn-secondary btn-block">Continue adding shapes!
                 </button>
                 <p>Note: the “Continue” option restarts with a fresh new Sobol sampling.
-                The process will be different than an uninterrupted computation!
+                The process will be different from an uninterrupted computation!
                 The GIF capture will also restart from zero.</p>
             </div>
 

@@ -62,11 +62,13 @@ let isEncoderStarted = false;
 let isRequestingCapture = false;
 let isRequestingStep = false;
 
-init();
+init(inputImage, 'input-image');
+addListeners();
 animate();
 
 function newRenderer(elementId) {
     let parentElement = document.getElementById(elementId);
+    parentElement.textContent = '';
     let renderer = new WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(1); // renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(inputWidth, inputHeight);
@@ -87,9 +89,9 @@ function newComposer(renderer, scene, camera, renderTarget) {
     return composer;
 }
 
-function init() {
+function init(imagePath, inputId) {
     // size
-    let inputElement = document.getElementById('input-image');
+    let inputElement = document.getElementById(inputId);
     inputWidth = inputElement.offsetWidth;
     inputHeight = inputElement.offsetHeight;
     ASPECT = inputWidth / inputHeight;
@@ -121,9 +123,7 @@ function init() {
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight, inputImage);
-
-    addListeners();
+    loadImage(insideWidth, insideHeight, imagePath);
 
     if (captureToGIF) {
         encoder = new GIFEncoder();
@@ -242,7 +242,6 @@ function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
 
 // Algorithm internals
 let currentPrimitive;
-let step = 0;
 let generator;
 let sobol;
 let debo = false;
@@ -252,7 +251,8 @@ let nbShapes = 0;
 const STEP0 = 0;
 const STEP1A = 1; const STEP1B = 2; const STEP1C = 3;
 const STEP2A = 4; const STEP2B = 5; const STEP2C = 6;
-const STEP3 = 7; const STEP4 = 8;
+const STEP3 = 7; const STEP4 = 8; const IDLE = 9;
+let step = STEP0;
 
 function step0() {
     if (debo) console.log('Starting...');
@@ -426,7 +426,7 @@ function step3() {
 }
 
 function step4() {
-    console.log('Done!');
+    if (debo) console.log('Done!');
     isRequestingCapture = true;
 
     if (captureToGIF) {
@@ -435,7 +435,7 @@ function step4() {
         encoder.download('anim.gif');
     }
 
-    step++; // = STEP0;
+    step = IDLE;
 }
 
 // ####################
@@ -460,6 +460,19 @@ function addListeners() {
             default: break;
         }
     });
+
+    document.getElementById('button-start')
+        .addEventListener('click',
+            () => { isRequestingStep = true; });
+    document.getElementById('button-stop')
+        .addEventListener('click',
+            () => requestStop());
+    document.getElementById('button-restart')
+        .addEventListener('click',
+            () => requestRestart());
+    document.getElementById('button-resume')
+        .addEventListener('click',
+            () => requestResume());
 }
 
 function loadImage(insideWidth, insideHeight, path) {
@@ -507,6 +520,7 @@ function stepAlgorithm() {
         case STEP2C: step2c(); break;
         case STEP3: step3(); break;
         case STEP4: step4(); break;
+        case IDLE: isRequestingStep = false; break;
     }
 }
 
@@ -526,19 +540,87 @@ function renderTargetScene() {
 }
 
 let tScenePasses = 0;
+let isRequestedSTOP = false;
+let isRequestedRestart = false;
+let isRequestedResume = false;
 function animate() {
     requestAnimationFrame(animate);
+
+    if (isRequestedSTOP)
+        stop();
     if (tScenePasses <= 3) {
         renderTargetScene();
         tScenePasses++;
         return;
     }
-    if (isRequestingStep) {
+    if (isRequestingStep)
         stepAlgorithm();
-    }
+
     renderPassOffscreen(composerTest);
     renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
-    if (isRequestingCapture) {
+
+    if (isRequestingCapture)
         captureFrame();
+    if (isRequestedResume)
+        resume();
+    if (isRequestedRestart)
+        restart();
+}
+
+function requestStop() {
+    isRequestedSTOP = true;
+}
+
+function reinitEverything(fromOutput) {
+    // settings
+    configAlpha = 100;
+    nbSobol = 64;
+    maxIter = 25;
+    maxShapes = 200;
+    captureToGIF = false;
+
+    // internals
+    isEncoderStarted = false;
+    isRequestingCapture = false;
+    isRequestingStep = false;
+    isRequestedRestart = false;
+    isRequestedSTOP = false;
+    isRequestedResume = false;
+
+    rng = new Random('Alpha');
+    currentIter = 0;
+    nbShapes = 0;
+    tScenePasses = 0;
+
+    let inputId = fromOutput ? 'output-image' : 'input-image';
+    init(inputImage, inputId);
+    step = STEP0;
+}
+
+function requestRestart() {
+    isRequestedRestart = true;
+}
+function requestResume() {
+    isRequestedResume = true;
+}
+
+function stop() {
+    step = IDLE;
+    isRequestedSTOP = false;
+    if (captureToGIF && isEncoderStarted) {
+        isEncoderStarted = false;
+        encoder.finish();
     }
+}
+
+function restart() {
+    stop();
+    reinitEverything(false);
+    isRequestingStep = true;
+}
+
+function resume() {
+    stop();
+    reinitEverything(true);
+    isRequestingStep = true;
 }
