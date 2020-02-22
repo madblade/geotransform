@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "description": "Description",
   "scripts": {
-    "dev": "webpack --mode development",
-    "build": "webpack --mode production --progress",
+    "dev": "webpack --env.development --mode development",
+    "build": "webpack --env.production --mode production --progress",
     "watch": "webpack-dev-server --env.development --output-public-path=/dist/ --open chrome --hot"
   },
   "keywords": [

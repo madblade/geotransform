@@ -3,65 +3,69 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const webpack = require('webpack');
 
-module.exports = {
-    entry: './src/main.js',
+module.exports = function(env) {
+    return {
+        entry: './src/main.js',
 
-    plugins: [
-        new CleanWebpackPlugin(),
-        new HtmlWebpackPlugin({
-            template: './src/index.html',
-            favicon: './src/img/favicon.ico'
-        }),
-        new webpack.HotModuleReplacementPlugin()
-    ],
+        plugins: [
+            new CleanWebpackPlugin(),
+            new HtmlWebpackPlugin({
+                template: './src/index.html',
+                favicon: './src/img/favicon.ico',
+                baseUrl: env.development ?
+                    '/' : 'https://madblade.github.io/geotransform/'
+            }),
+            new webpack.HotModuleReplacementPlugin()
+        ],
 
-    output: {
-        path: path.resolve(__dirname, './dist'),
-        publicPath: './',
-        filename: '[name].[hash].js'
-    },
+        output: {
+            path: path.resolve(__dirname, './dist'),
+            publicPath: './',
+            filename: '[name].[hash].js'
+        },
 
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /node_modules/,
-                use: {
-                    loader: 'babel-loader'
-                }
-            },
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader']
-            },
-            {
-                test: /\.(png|svg|jpg|gif)$/,
-                use: [
-                    'file-loader',
-                ],
-            },
-        ]
-    },
+        module: {
+            rules: [
+                {
+                    test: /\.js$/,
+                    exclude: /node_modules/,
+                    use: {
+                        loader: 'babel-loader'
+                    }
+                },
+                {
+                    test: /\.css$/,
+                    use: ['style-loader', 'css-loader']
+                },
+                {
+                    test: /\.(png|svg|jpg|gif)$/,
+                    use: [
+                        'file-loader',
+                    ],
+                },
+            ]
+        },
 
-    // devtool: 'inline-source-map',
+        // devtool: 'inline-source-map',
 
-    devServer: {
-        contentBase: 'http://localhost:9000/dist',
-        port: 9000,
-        hot: true,
-        disableHostCheck: true
-    },
+        devServer: {
+            contentBase: 'http://localhost:9000/dist',
+            port: 9000,
+            hot: true,
+            disableHostCheck: true
+        },
 
-    optimization: {
-        runtimeChunk: 'single',
-        splitChunks: {
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all'
+        optimization: {
+            runtimeChunk: 'single',
+            splitChunks: {
+                cacheGroups: {
+                    vendor: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name: 'vendors',
+                        chunks: 'all'
+                    }
                 }
             }
         }
-    }
+    };
 };
