@@ -20,6 +20,7 @@ import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
 import {Random} from './lib/random';
 import {GIFEncoder} from './lib/GIFEncoder';
 import {Rectangle, RectangleGenerator} from './lib/rectangle';
+import {Triangle, TriangleGenerator} from './lib/triangle';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -251,7 +252,7 @@ function makeNewGenerator(w, h, adapt) {
     switch (primitiveType) {
         case ELLIPSE: return new EllipseGenerator(w, h, adapt, false);
         case RECTANGLE: return new RectangleGenerator(w, h, adapt, false);
-        case TRIANGLE:
+        case TRIANGLE: return new TriangleGenerator(w, h, adapt, false);
         case RELLIPSE: return new EllipseGenerator(w, h, adapt, true);
         case RRECTANGLE: return new RectangleGenerator(w, h, adapt, true);
         default: break;
@@ -264,7 +265,7 @@ function makeNewPrimitive(alpha) {
         case ELLIPSE: return new Ellipse(alpha);
         case RRECTANGLE:
         case RECTANGLE: return new Rectangle(alpha);
-        case TRIANGLE:
+        case TRIANGLE: return new Triangle(alpha);
         default: return;
     }
 }
@@ -322,7 +323,8 @@ function step1a() {
         nextPrimitive[2], nextPrimitive[3],
         nextPrimitive[4],
         new Color(0xffffff),
-        a
+        a,
+        nextPrimitive[5]
     );
     currentPrimitive.updateMesh(0);
     sceneTest.remove(currentPrimitive.getMesh(1));
@@ -420,7 +422,7 @@ function step2c() {
         }
 
         if (debo) console.log('==== HILLCLIMB done ====');
-        step++;
+        step = STEP3;
         currentIter = 0;
     }
 }
