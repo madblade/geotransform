@@ -19,6 +19,7 @@ import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
 import {Random} from './lib/random';
 import {GIFEncoder} from './lib/GIFEncoder';
+import {Rectangle, RectangleGenerator} from './lib/rectangle';
 
 // camera
 let VIEW_ANGLE = 45;
@@ -246,17 +247,26 @@ function makeBackground(color) {
     return background;
 }
 
-function makeNewPrimitive(alpha) {
-    let p;
+function makeNewGenerator(w, h, adapt) {
     switch (primitiveType) {
-        case ELLIPSE: p = new Ellipse(alpha); break;
-        case RECTANGLE:
+        case ELLIPSE: return new EllipseGenerator(w, h, adapt, false);
+        case RECTANGLE: return new RectangleGenerator(w, h, adapt, false);
         case TRIANGLE:
-        case RELLIPSE:
-        case RRECTANGLE:
+        case RELLIPSE: return new EllipseGenerator(w, h, adapt, true);
+        case RRECTANGLE: return new RectangleGenerator(w, h, adapt, true);
         default: break;
     }
-    return p;
+}
+
+function makeNewPrimitive(alpha) {
+    switch (primitiveType) {
+        case RELLIPSE:
+        case ELLIPSE: return new Ellipse(alpha);
+        case RRECTANGLE:
+        case RECTANGLE: return new Rectangle(alpha);
+        case TRIANGLE:
+        default: return;
+    }
 }
 
 // Algorithm internals
@@ -289,7 +299,7 @@ function step0() {
     sceneTest.add(planeTest);
 
     // Pre-sampling.
-    generator = new EllipseGenerator(inputWidth, inputHeight, useAdaptiveSampling);
+    generator = makeNewGenerator(inputWidth, inputHeight, useAdaptiveSampling);
     sobol = generator.generateCover(nbSobol);
     currentPrimitive = makeNewPrimitive(configAlpha);
     scenePrimitive.add(currentPrimitive.getMesh(0));
