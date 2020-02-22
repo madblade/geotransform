@@ -44,16 +44,19 @@
                 <label for="group-driver-buttons" class="col-form-label">Computation</label>
                 <button type="button"
                         id="button-stop"
-                        class="btn btn-secondary btn-block">Pause computation!
+                        class="btn btn-secondary btn-block">Stop computation!
                 </button>
                 <button type="button"
                         id="button-resume"
-                        class="btn btn-secondary btn-block">Resume computation!
+                        class="btn btn-secondary btn-block">Restart computation!
                 </button>
                 <button type="button"
                         id="button-newround"
                         class="btn btn-secondary btn-block">Continue adding shapes!
                 </button>
+                <p>Note: the “Continue” option restarts with a fresh new Sobol sampling.
+                The process will be different than an uninterrupted computation!
+                The GIF capture will also restart from zero.</p>
             </div>
 
             <div class="col-4">
@@ -104,6 +107,16 @@
                         <input class="form-control" type="number" value="512" max="512" min="64"
                                id="number-input-height">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputState">Shape type</label>
+                    <select id="inputState" class="form-control">
+                        <option selected>Ellipse</option>
+                        <option>Rectangle</option>
+                        <option>Triangle</option>
+                        <option>Rotated ellipse</option>
+                        <option>Rotated rectangle</option>
+                    </select>
                 </div>
             </div>
 
