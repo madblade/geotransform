@@ -15,11 +15,11 @@
             </button>
         </div>
         <div class="row">
-            <div class="col-6" id="input">
+            <div class="col-lg-6 col-12" id="input">
                 <h5>Input</h5>
                 <img id="input-image" src="${require(`./img/j.png`).default}"/>
             </div>
-            <div class="col-6" id="output">
+            <div class="col-lg-6 col-12" id="output">
                 <h5>Output</h5>
                 <img id="output-image"/>
             </div>
@@ -28,8 +28,8 @@
             <h5>Progress</h5>
         </div>
         <div class="row" id="container">
-            <div class="col-6" id="buffer-target"></div>
-            <div class="col-6" id="buffer-test"></div>
+            <div class="col-lg-6 col-12" id="buffer-target"></div>
+            <div class="col-lg-6 col-12" id="buffer-test"></div>
         </div>
         <div class="row">
             <h5>Settings</h5>
@@ -64,7 +64,7 @@
                 <div class="form-group">
                     <label for="number-input-shapes" class="col-form-label">Number of shapes</label>
                     <div class="">
-                        <input class="form-control" type="number" value="50" id="number-input-shapes">
+                        <input class="form-control" type="number" value="200" id="number-input-shapes">
                     </div>
                 </div>
                 <div class="form-group">
@@ -94,21 +94,7 @@
             </div>
 
             <div class="col-4">
-                <div class="form-group">
-                    <label for="number-input-width" class="col-form-label">Image width</label>
-                    <div class="">
-                        <input class="form-control" type="number" value="512" max="512" min="64"
-                               id="number-input-width">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="number-input-height" class="col-form-label">Image height</label>
-                    <div class="">
-                        <input class="form-control" type="number" value="512" max="512" min="64"
-                               id="number-input-height">
-                    </div>
-                </div>
-                <div class="form-group">
+                <div class="form-group" id="wrapper-shape-type">
                     <label for="dropdown-shape">Shape type</label>
                     <select id="dropdown-shape" class="form-control">
                         <option selected>Ellipse</option>

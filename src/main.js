@@ -641,15 +641,12 @@ function updateGUI(isRunning) {
     let nbShapesInput = document.getElementById('number-input-shapes');
     let sobolSamples = document.getElementById('number-input-sobol');
     let hillIterations = document.getElementById('number-input-hillclimb');
-    let height = document.getElementById('number-input-height');
-    let width = document.getElementById('number-input-width');
 
     let shape = document.getElementById('dropdown-shape');
     let imageSrc = document.getElementById('text-input-image-source');
 
     let disabledRun = [startBtn, restartBtn, resumeBtn, saveSettingsBtn,
-        adaptive, gif, nbShapesInput, sobolSamples, hillIterations,
-        height, width, shape, imageSrc];
+        adaptive, gif, nbShapesInput, sobolSamples, hillIterations, shape, imageSrc];
 
     if (isRunning)
     {
@@ -677,8 +674,6 @@ function applyGUISettings() {
     let nbShapesInput = document.getElementById('number-input-shapes').value;
     let sobolSamples = document.getElementById('number-input-sobol').value;
     let hillIterations = document.getElementById('number-input-hillclimb').value;
-    let height = document.getElementById('number-input-height').value;
-    let width = document.getElementById('number-input-width').value;
     let shape = document.getElementById('dropdown-shape').value;
     let imageSrc = document.getElementById('text-input-image-source').value;
 
@@ -693,12 +688,6 @@ function applyGUISettings() {
     let hi = parseInt(hillIterations, 10);
     if (hi > 0 && hi < 1000 && typeof hi === 'number')
         maxIter = hi;
-    let h = parseInt(height, 10);
-    if (h > 16 && h < 1024 && typeof h === 'number')
-        inputHeight = h;
-    let w = parseInt(width, 10);
-    if (w > 16 && w < 1024 && typeof w === 'number')
-        inputWidth = w;
     switch (shape) {
         case 'Ellipse': primitiveType = ELLIPSE; break;
         case 'Rectangle': primitiveType = RECTANGLE; break;
