@@ -46,10 +46,13 @@ let planeTest;
 let background;
 
 // Algorithm settings
-let configAlpha = 100;
+let configAlpha = 128;
 let nbSobol = 64;
 let maxIter = 25;
 let maxShapes = 200;
+let ELLIPSE = 0; let RECTANGLE = 1; let TRIANGLE = 2;
+let RELLIPSE = 3; let RRECTANGLE = 4;
+let primitiveType = ELLIPSE;
 
 // Capture settings
 let captureToGIF = false;
@@ -241,11 +244,17 @@ function makeBackground(color) {
     return background;
 }
 
-function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
-    let e = new Ellipse(
-        cx, cy, rx, ry, angle, color, alpha
-    );
-    return e;
+function makeNewPrimitive(alpha) {
+    let p;
+    switch (primitiveType) {
+        case ELLIPSE: p = new Ellipse(alpha); break;
+        case RECTANGLE:
+        case TRIANGLE:
+        case RELLIPSE:
+        case RRECTANGLE:
+        default: break;
+    }
+    return p;
 }
 
 // Algorithm internals
@@ -264,6 +273,7 @@ let step = STEP0;
 
 function step0() {
     if (debo) console.log('Starting...');
+    updateGUI(true);
     initBuffers();
 
     // Get rendered picture into TargetBuffer
@@ -279,12 +289,7 @@ function step0() {
     // Pre-sampling.
     generator = new EllipseGenerator(inputWidth, inputHeight);
     sobol = generator.generateCover(nbSobol);
-    currentPrimitive = makeNewPrimitive(
-        new Color(0xffffff),
-        0, 0,
-        1, 1,
-        0, configAlpha
-    );
+    currentPrimitive = makeNewPrimitive(configAlpha);
     scenePrimitive.add(currentPrimitive.getMesh(0));
 
     // Next.
@@ -419,7 +424,7 @@ function step3() {
         let a = configAlpha;
         scenePrimitive.remove(currentPrimitive.getMesh(0));
         sceneTest.remove(currentPrimitive.getMesh(1));
-        currentPrimitive = makeNewPrimitive(new Color(0xffffff), 100, 100, 1, 1, 0, a);
+        currentPrimitive = makeNewPrimitive(a);
         scenePrimitive.add(currentPrimitive.getMesh(0));
         sceneTest.add(currentPrimitive.getMesh(1));
         step = STEP1A;
@@ -431,14 +436,12 @@ function step3() {
 function step4() {
     if (debo) console.log('Done!');
     isRequestingCapture = true;
-
     if (captureToGIF) {
         isEncoderStarted = false;
         encoder.finish();
         encoder.download('anim.gif');
     }
-
-    step = IDLE;
+    stop();
 }
 
 // ####################
@@ -456,7 +459,7 @@ function addListeners() {
                 isRequestingCapture = true;
                 break;
             case 221: // À
-                if (tScenePasses > 2) {
+                if (tScenePasses > tScenePassesNecessary - 1) {
                     isRequestingStep = true;
                 }
                 break;
@@ -464,18 +467,15 @@ function addListeners() {
         }
     });
 
-    document.getElementById('button-start')
-        .addEventListener('click',
-            () => { isRequestingStep = true; });
-    document.getElementById('button-stop')
-        .addEventListener('click',
-            () => requestStop());
-    document.getElementById('button-restart')
-        .addEventListener('click',
-            () => requestRestart());
-    document.getElementById('button-resume')
-        .addEventListener('click',
-            () => requestResume());
+    document.getElementById('button-start').addEventListener('click',
+        () => { isRequestingStep = true; });
+    document.getElementById('button-stop').addEventListener('click',
+        () => requestStop());
+    document.getElementById('button-restart').addEventListener('click',
+        () => requestRestart());
+    document.getElementById('button-resume').addEventListener('click',
+        () => requestResume());
+
 }
 
 function loadImage(insideWidth, insideHeight, path) {
@@ -543,6 +543,7 @@ function renderTargetScene() {
 }
 
 let tScenePasses = 0;
+let tScenePassesNecessary = 10;
 let isRequestedSTOP = false;
 let isRequestedRestart = false;
 let isRequestedResume = false;
@@ -552,7 +553,7 @@ function animate() {
 
     if (isRequestedSTOP)
         stop();
-    if (tScenePasses <= 3) {
+    if (tScenePasses <= tScenePassesNecessary) {
         renderTargetScene();
         tScenePasses++;
         return;
@@ -577,11 +578,11 @@ function requestStop() {
 
 function reinitEverything(fromOutput) {
     // settings
-    configAlpha = 100;
-    nbSobol = 64;
-    maxIter = 25;
-    maxShapes = 200;
-    captureToGIF = false;
+    // configAlpha = 100;
+    // nbSobol = 64;
+    // maxIter = 25;
+    // maxShapes = 200;
+    // captureToGIF = false;
 
     // internals
     isEncoderStarted = false;
@@ -615,6 +616,7 @@ function stop() {
         isEncoderStarted = false;
         encoder.finish();
     }
+    updateGUI(false);
 }
 
 function restart() {
@@ -628,4 +630,48 @@ function resume() {
     reinitEverything(true);
     isResuming = true;
     isRequestingStep = true;
+}
+
+function updateGUI(isRunning) {
+    let startBtn = document.getElementById('button-start');
+    let stopBtn = document.getElementById('button-stop');
+    let restartBtn = document.getElementById('button-restart');
+    let resumeBtn = document.getElementById('button-resume');
+    let saveSettingsBtn = document.getElementById('button-apply-settings');
+
+    let adaptive = document.getElementById('check-adaptive-sobol');
+    let gif = document.getElementById('check-capture-gif');
+    // let genalpha = document.getElementById('check-generate-alpha');
+
+    let nbShapesInput = document.getElementById('number-input-shapes');
+    let sobolSamples = document.getElementById('number-input-sobol');
+    let hillIterations = document.getElementById('number-input-hillclimb');
+    let height = document.getElementById('number-input-height');
+    let width = document.getElementById('number-input-width');
+
+    let shape = document.getElementById('dropdown-shape');
+    let imageSrc = document.getElementById('text-input-image-source');
+
+    let disabledRun = [startBtn, restartBtn, resumeBtn, saveSettingsBtn,
+        adaptive, gif, nbShapesInput, sobolSamples, hillIterations,
+        height, width, shape, imageSrc];
+
+    if (isRunning)
+    {
+        stopBtn.removeAttribute('disabled');
+        for (let i = 0; i < disabledRun.length; ++i) {
+            let el = disabledRun[i];
+            if (el)
+                el.setAttribute('disabled', '');
+        }
+    }
+    else
+    {
+        stopBtn.setAttribute('disabled', '');
+        for (let i = 0; i < disabledRun.length; ++i) {
+            let el = disabledRun[i];
+            if (el)
+                el.removeAttribute('disabled');
+        }
+    }
 }

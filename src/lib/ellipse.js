@@ -1,26 +1,27 @@
 import {
-    CircleBufferGeometry,
+    CircleBufferGeometry, Color,
     Mesh, MeshBasicMaterial
 } from 'three';
 import {Random, Sobol} from './random';
 
 let Ellipse = function(
+    alpha,
     cX, cY, rX, rY,
     theta, color
 ) {
     // Constructor
-    this.alpha = 128;
-    this.cX = cX;
-    this.cY = cY;
-    this.rX = rX;
-    this.rY = rY;
-    this.theta = theta;
-    this.color = color;
+    this.alpha = alpha || 128;
+    this.cX = cX || 100;
+    this.cY = cY || 100;
+    this.rX = rX || 1;
+    this.rY = rY || 1;
+    this.theta = theta || 0;
+    this.color = color || new Color(0xffffff);
 
-    this.updateModel = function(cx, cy, rx, ry, th, cl, alpha)
+    this.updateModel = function(cx, cy, rx, ry, th, cl, a)
     {
         this.cX = cx; this.cY = cy; this.rX = rx; this.rY = ry;
-        this.alpha = alpha;
+        this.alpha = a;
         this.color = cl;
         this.theta = th;
     };
