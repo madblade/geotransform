@@ -10,7 +10,7 @@ import {
     Mesh, TextureLoader,
     PlaneBufferGeometry, MeshBasicMaterial,
     WebGLRenderTarget, Color,
-    LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
+    LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat, Texture,
 } from 'three';
 import {Ellipse, EllipseGenerator} from './lib/ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
@@ -34,7 +34,6 @@ let rendererTest;
 let rendererPrimitive;
 
 let sceneTarget;
-let sceneCurrent;
 let sceneTest;
 let scenePrimitive;
 
@@ -43,7 +42,6 @@ let renderTargetTest; let composerTest;
 let renderTargetPrimitive; let composerPrimitive;
 
 let planeTarget;
-let planeCurrent;
 let planeTest;
 let background;
 
@@ -62,7 +60,7 @@ let isEncoderStarted = false;
 let isRequestingCapture = false;
 let isRequestingStep = false;
 
-init(inputImage, 'input-image');
+init(inputImage);
 addListeners();
 animate();
 
@@ -89,8 +87,9 @@ function newComposer(renderer, scene, camera, renderTarget) {
     return composer;
 }
 
-function init(imagePath, inputId) {
+function init(imagePath) {
     // size
+    let inputId = 'input-image';
     let inputElement = document.getElementById(inputId);
     inputWidth = inputElement.offsetWidth;
     inputHeight = inputElement.offsetHeight;
@@ -107,7 +106,6 @@ function init(imagePath, inputId) {
 
     // scene
     sceneTarget = new Scene();
-    sceneCurrent = new Scene();
     sceneTest = new Scene();
     scenePrimitive = new Scene();
 
@@ -158,11 +156,10 @@ function dumpRenderTargetToTexture() {
     rendererTest.readRenderTargetPixels(renderTargetTest, 0, 0, inputWidth, inputHeight, bufferCurrent);
     let currentTexture = new DataTexture(bufferCurrent, inputWidth, inputHeight, RGBAFormat);
     sceneTest.remove(planeTest);
-    let planegeom = new PlaneBufferGeometry(inputWidth / 10, inputHeight / 10, 1);
+    let planegeom = new PlaneBufferGeometry(
+        inputWidth / 10, inputHeight / 10, 1
+    );
     let planemat = new MeshBasicMaterial({map: currentTexture});
-    // planemat.generateMipmaps = false;
-    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping;
-    // planemat.minFilter = LinearFilter;
     planeTest = new Mesh(planegeom, planemat);
     sceneTest.add(planeTest);
 }
@@ -227,8 +224,19 @@ function computeBufferDistance(buffer1, buffer2) {
 
 // Primitives
 function makeBackground(color) {
-    let planegeom = new PlaneBufferGeometry(inputWidth, inputHeight, 1);
-    let planemat = new MeshBasicMaterial({ color });
+    let planegeom = new PlaneBufferGeometry(
+        inputWidth / 10, inputHeight / 10, 1
+    );
+    let planemat;
+    let outputImage = document.getElementById('output-image');
+    if (isResuming && outputImage.src && outputImage.src.length > 0) {
+        let planemap = new Texture(outputImage);
+        planemap.needsUpdate = true;
+        planemat = new MeshBasicMaterial({ color: 0xffffff, map: planemap });
+        isResuming = false;
+    } else {
+        planemat = new MeshBasicMaterial({ color });
+    }
     background = new Mesh(planegeom, planemat);
     return background;
 }
@@ -264,10 +272,6 @@ function step0() {
     // Compute background color
     let color = computeBackgroundColorOutput();
 
-    // Init CurrentScene with background
-    planeCurrent = makeBackground(color);
-    sceneCurrent.add(planeCurrent);
-
     // Init TestScene with background
     planeTest = makeBackground(color);
     sceneTest.add(planeTest);
@@ -282,7 +286,6 @@ function step0() {
         0, configAlpha
     );
     scenePrimitive.add(currentPrimitive.getMesh(0));
-    sceneCurrent.add(currentPrimitive.getMesh(2));
 
     // Next.
     step = STEP1A;
@@ -543,6 +546,7 @@ let tScenePasses = 0;
 let isRequestedSTOP = false;
 let isRequestedRestart = false;
 let isRequestedResume = false;
+let isResuming = false;
 function animate() {
     requestAnimationFrame(animate);
 
@@ -586,14 +590,14 @@ function reinitEverything(fromOutput) {
     isRequestedRestart = false;
     isRequestedSTOP = false;
     isRequestedResume = false;
+    isResuming = false;
 
     rng = new Random('Alpha');
     currentIter = 0;
     nbShapes = 0;
     tScenePasses = 0;
 
-    let inputId = fromOutput ? 'output-image' : 'input-image';
-    init(inputImage, inputId);
+    init(inputImage, fromOutput);
     step = STEP0;
 }
 
@@ -622,5 +626,6 @@ function restart() {
 function resume() {
     stop();
     reinitEverything(true);
+    isResuming = true;
     isRequestingStep = true;
 }
