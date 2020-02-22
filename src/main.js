@@ -1,6 +1,6 @@
 
 // Webpack assets
-import inputImage from './img/j.png';
+import joc from './img/j.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.css';
 
@@ -46,6 +46,7 @@ let planeTest;
 let background;
 
 // Algorithm settings
+let useAdaptiveSampling = false;
 let configAlpha = 128;
 let nbSobol = 64;
 let maxIter = 25;
@@ -58,6 +59,7 @@ let primitiveType = ELLIPSE;
 let captureToGIF = false;
 
 // Internals
+let inputImage = joc;
 let encoder;
 let isEncoderStarted = false;
 let isRequestingCapture = false;
@@ -287,7 +289,7 @@ function step0() {
     sceneTest.add(planeTest);
 
     // Pre-sampling.
-    generator = new EllipseGenerator(inputWidth, inputHeight);
+    generator = new EllipseGenerator(inputWidth, inputHeight, useAdaptiveSampling);
     sobol = generator.generateCover(nbSobol);
     currentPrimitive = makeNewPrimitive(configAlpha);
     scenePrimitive.add(currentPrimitive.getMesh(0));
@@ -468,14 +470,15 @@ function addListeners() {
     });
 
     document.getElementById('button-start').addEventListener('click',
-        () => { isRequestingStep = true; });
+        () => requestRestart());
     document.getElementById('button-stop').addEventListener('click',
         () => requestStop());
     document.getElementById('button-restart').addEventListener('click',
         () => requestRestart());
     document.getElementById('button-resume').addEventListener('click',
         () => requestResume());
-
+    document.getElementById('button-apply-settings').addEventListener('click',
+        () => applyGUISettings());
 }
 
 function loadImage(insideWidth, insideHeight, path) {
@@ -507,12 +510,12 @@ function captureFrame() {
         }
     }
     if (isEncoderStarted) {
-        encoder.addFrame(c, true);
+        if (maxShapes < 100 || nbShapes % Math.floor(maxShapes / nbShapes) === 0)
+            encoder.addFrame(c, true);
     }
 }
 
 function stepAlgorithm() {
-    // isRequestingStep = false;
     switch (step) {
         case STEP0: step0(); break;
         case STEP1A: step1a(); break;
@@ -551,13 +554,13 @@ let isResuming = false;
 function animate() {
     requestAnimationFrame(animate);
 
-    if (isRequestedSTOP)
-        stop();
     if (tScenePasses <= tScenePassesNecessary) {
         renderTargetScene();
         tScenePasses++;
         return;
     }
+    if (isRequestedSTOP)
+        stop();
     if (isRequestingStep)
         stepAlgorithm();
 
@@ -577,13 +580,6 @@ function requestStop() {
 }
 
 function reinitEverything(fromOutput) {
-    // settings
-    // configAlpha = 100;
-    // nbSobol = 64;
-    // maxIter = 25;
-    // maxShapes = 200;
-    // captureToGIF = false;
-
     // internals
     isEncoderStarted = false;
     isRequestingCapture = false;
@@ -641,7 +637,6 @@ function updateGUI(isRunning) {
 
     let adaptive = document.getElementById('check-adaptive-sobol');
     let gif = document.getElementById('check-capture-gif');
-    // let genalpha = document.getElementById('check-generate-alpha');
 
     let nbShapesInput = document.getElementById('number-input-shapes');
     let sobolSamples = document.getElementById('number-input-sobol');
@@ -673,5 +668,49 @@ function updateGUI(isRunning) {
             if (el)
                 el.removeAttribute('disabled');
         }
+    }
+}
+
+function applyGUISettings() {
+    let adaptive = document.getElementById('check-adaptive-sobol').checked;
+    let gif = document.getElementById('check-capture-gif').checked;
+    let nbShapesInput = document.getElementById('number-input-shapes').value;
+    let sobolSamples = document.getElementById('number-input-sobol').value;
+    let hillIterations = document.getElementById('number-input-hillclimb').value;
+    let height = document.getElementById('number-input-height').value;
+    let width = document.getElementById('number-input-width').value;
+    let shape = document.getElementById('dropdown-shape').value;
+    let imageSrc = document.getElementById('text-input-image-source').value;
+
+    useAdaptiveSampling = adaptive;
+    captureToGIF = gif;
+    let n = parseInt(nbShapesInput, 10);
+    if (n > 0 && n < 2000000 && typeof n === 'number')
+        maxShapes = n;
+    let ss = parseInt(sobolSamples, 10);
+    if (ss > 0 && ss < 1000 && typeof ss === 'number')
+        nbSobol = ss;
+    let hi = parseInt(hillIterations, 10);
+    if (hi > 0 && hi < 1000 && typeof hi === 'number')
+        maxIter = hi;
+    let h = parseInt(height, 10);
+    if (h > 16 && h < 1024 && typeof h === 'number')
+        inputHeight = h;
+    let w = parseInt(width, 10);
+    if (w > 16 && w < 1024 && typeof w === 'number')
+        inputWidth = w;
+    switch (shape) {
+        case 'Ellipse': primitiveType = ELLIPSE; break;
+        case 'Rectangle': primitiveType = RECTANGLE; break;
+        case 'Triangle': primitiveType = TRIANGLE; break;
+        case 'Rotated ellipse': primitiveType = RELLIPSE; break;
+        case 'Rotated rectangle': primitiveType = RRECTANGLE; break;
+        default: break;
+    }
+
+    if (imageSrc && imageSrc.length > 1 && inputImage !== imageSrc) {
+        inputImage = imageSrc;
+        document.getElementById('input-image').src = imageSrc;
+        tScenePasses = 0;
     }
 }

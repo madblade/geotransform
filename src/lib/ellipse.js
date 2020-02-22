@@ -90,10 +90,12 @@ let Ellipse = function(
     };
 };
 
-let EllipseGenerator = function(inputWidth, inputHeight)
+let EllipseGenerator = function(inputWidth, inputHeight, useAdaptiveSampling)
 {
     this.SBL = new Sobol(4);
     this.rng = new Random('Ellipse');
+    this.adaptive = useAdaptiveSampling;
+    this.temp = 1;
     this.cxmax = inputWidth / 20;
     this.cxmin = -this.cxmax;
     this.cxrange = this.cxmax - this.cxmin;
@@ -102,11 +104,11 @@ let EllipseGenerator = function(inputWidth, inputHeight)
     this.cymin = -this.cymax;
     this.cyrange = this.cymax - this.cymin;
 
-    this.rxmax = 2;
-    this.rxmin = 0.01;
+    this.rxmax = 2 * inputWidth / 256;
+    this.rxmin = 0.01 * inputWidth / 256;
     this.rxrange = this.rxmax - this.rxmin;
 
-    this.rymax = 2;
+    this.rymax = 2 * inputHeight / 256;
     this.rymin = this.rxmin;
     this.ryrange = this.rymax - this.rymin;
 
@@ -119,6 +121,7 @@ let EllipseGenerator = function(inputWidth, inputHeight)
     this.anglerange = this.anglemax - this.anglemin;
 
     this.generateCover = function(nbEllipse) {
+        if (this.adaptive) this.temp = this.temp * 0.99;
         let sobol = this.SBL.generate(nbEllipse);
         let ellipseParameters = [];
         for (let i = 0; i < sobol.length; ++i) {
@@ -126,8 +129,8 @@ let EllipseGenerator = function(inputWidth, inputHeight)
             ellipseParameters.push([
                 this.cxmin + si[0] * this.cxrange,
                 this.cymin + si[1] * this.cyrange,
-                this.rxmin + si[2] * this.rxrange,
-                this.rymin + si[3] * this.ryrange,
+                this.rxmin + si[2] * this.rxrange * this.temp,
+                this.rymin + si[3] * this.ryrange * this.temp,
                 0
                 // this.anglemin + si[4] * this.anglerange
             ]);
