@@ -1,5 +1,9 @@
 
+// Webpack assets
 import inputImage from './img/j.png';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './style/style.css';
+
 import {
     WebGLRenderer,
     Scene, PerspectiveCamera,
@@ -19,7 +23,6 @@ import {GIFEncoder} from './lib/GIFEncoder';
 // camera
 let VIEW_ANGLE = 45;
 let ASPECT = 1;
-
 let NEAR = 0.001;
 let FAR = 5000;
 

@@ -4,45 +4,26 @@
     <title>Geometry Transform</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <style>
-        body {
-            color: #888888;
-            font-family: Monospace,sans-serif;
-            font-size:13px;
-            background-color: #000;
-            margin: 0;
-        }
-        a { color: #00f; }
-        #workspace { display: flex; flex-wrap: wrap; }
-        #input { flex: 1; }
-        #container { flex: 2; }
-        section { width: 100%; display: flex; flex-wrap: wrap; }
-        section>div { padding: 0 5px 5px;}
-        .line-break {width: 100%;}
-        #output { flex: 1; }
-    </style>
 </head>
 <body>
-    <div id="workspace">
-        <div id="input">
-            <h5>Input</h5>
-            <img id="input-image" src="${require(`./img/j.png`).default}"/>
+    <div class="container" id="workspace">
+        <div class="row">
+            <div class="col-sm" id="input">
+                <h5>Input</h5>
+                <img id="input-image" src="${require(`./img/j.png`).default}"/>
+            </div>
+            <div class="col-sm" id="output">
+                <h5>Output</h5>
+                <img id="output-image"/>
+            </div>
         </div>
-        <div id="container">
-            <section>
-                <h5>Progress</h5>
-            </section>
-            <section>
-                <div id="buffer-target"></div>
-                <div id="buffer-current"></div>
-                <div class="line-break"></div>
-                <div id="buffer-test"></div>
-                <div id="buffer-primitive"></div>
-            </section>
+        <div class="row">
+            <h5>Progress</h5>
         </div>
-        <div id="output">
-            <h5>Output</h5>
-            <img id="output-image"/>
+        <div class="row" id="container">
+            <div class="col-sm" id="buffer-target"></div>
+            <div class="col-sm" id="buffer-test"></div>
+            <div class="col-sm" id="buffer-primitive"></div>
         </div>
     </div>
 </body>

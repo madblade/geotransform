@@ -1,0 +1,9 @@
+body {
+    color: #888888;
+    font-family: Monospace,sans-serif;
+    font-size:13px;
+    background-color: #000;
+    margin: 0;
+}
+a { color: #00f; }
+h5 { margin-top: 10px; }
