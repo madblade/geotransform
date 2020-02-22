@@ -145,6 +145,4 @@ let Sobol = function(dimension)
     };
 };
 
-// Random.prototype.constructor = Random;
-
 export { Random, Sobol };

@@ -38,9 +38,11 @@ Ellipse.prototype.setColor = function(newColor) {
 
 // Drawing
 Ellipse.prototype.buildMesh = function() {
-    let geometry = this.isRectangle ?
-        new PlaneBufferGeometry(10, 10, 1, 1) :
-        new CircleBufferGeometry(5, 32);
+    let geometry;
+    if (this.isRectangle)
+        geometry = new PlaneBufferGeometry(10, 10, 1, 1);
+    else
+        geometry = new CircleBufferGeometry(5, 32);
 
     let material = new MeshBasicMaterial({
         color: this.color,
