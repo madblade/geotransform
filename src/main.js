@@ -6,7 +6,6 @@ import {
     PlaneBufferGeometry, MeshBasicMaterial,
     WebGLRenderTarget, Color,
     LinearFilter, ClampToEdgeWrapping, DataTexture, RGBAFormat,
-    // ShaderPass, EffectComposer, RenderPass
 } from 'three';
 import {Ellipse, EllipseGenerator} from './ellipse';
 import {FXAAShader} from 'three/examples/jsm/shaders/FXAAShader';
@@ -26,7 +25,6 @@ let mainCamera;
 let inputWidth;
 let inputHeight;
 let rendererTarget;
-// let rendererCurrent;
 let rendererTest;
 let rendererPrimitive;
 
@@ -36,7 +34,6 @@ let sceneTest;
 let scenePrimitive;
 
 let renderTargetTarget; let composerTarget;
-// let renderTargetCurrent; let composerCurrent;
 let renderTargetTest; let composerTest;
 let renderTargetPrimitive; let composerPrimitive;
 
@@ -44,6 +41,21 @@ let planeTarget;
 let planeCurrent;
 let planeTest;
 let background;
+
+// Algorithm settings
+let configAlpha = 100;
+let nbSobol = 64;
+let maxIter = 25;
+let maxShapes = 200;
+
+// Capture settings
+let captureToGIF = false;
+
+// Internals
+let encoder;
+let isEncoderStarted = false;
+let isRequestingCapture = false;
+let isRequestingStep = false;
 
 init();
 animate();
@@ -79,12 +91,10 @@ function init() {
 
     // renderer
     rendererTarget = newRenderer('buffer-target');
-    // rendererCurrent = newRenderer('buffer-current');
     rendererTest = newRenderer('buffer-test');
     rendererPrimitive = newRenderer('buffer-primitive');
 
     renderTargetTarget = new WebGLRenderTarget(inputWidth, inputHeight);
-    // renderTargetCurrent = new WebGLRenderTarget(inputWidth, inputHeight);
     renderTargetTest = new WebGLRenderTarget(inputWidth, inputHeight);
     renderTargetPrimitive = new WebGLRenderTarget(inputWidth, inputHeight);
 
@@ -102,14 +112,21 @@ function init() {
 
     // FXAA
     composerTarget = newComposer(rendererTarget, sceneTarget, mainCamera, renderTargetTarget);
-    // composerCurrent = newComposer(rendererCurrent, sceneCurrent, mainCamera, renderTargetCurrent);
     composerTest = newComposer(rendererTest, sceneTest, mainCamera, renderTargetTest);
     composerPrimitive = newComposer(rendererPrimitive, scenePrimitive, mainCamera, renderTargetPrimitive);
 
     // setup
-    loadImage(insideWidth, insideHeight, 'img/g2.png');
+    loadImage(insideWidth, insideHeight, 'img/j.png');
 
     addListeners();
+
+    if (captureToGIF) {
+        encoder = new GIFEncoder();
+        encoder.setRepeat(0);
+        encoder.setSize(inputWidth, inputHeight);
+        encoder.start();
+        isEncoderStarted = true;
+    }
 }
 
 // Buffers
@@ -139,7 +156,7 @@ function dumpRenderTargetToTexture() {
     let planegeom = new PlaneBufferGeometry(inputWidth / 10, inputHeight / 10, 1);
     let planemat = new MeshBasicMaterial({map: currentTexture});
     // planemat.generateMipmaps = false;
-    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping
+    // planemat.wrapS = planemat.wrapT = ClampToEdgeWrapping;
     // planemat.minFilter = LinearFilter;
     planeTest = new Mesh(planegeom, planemat);
     sceneTest.add(planeTest);
@@ -162,14 +179,11 @@ function computeBackgroundColorOutput() {
 
 function computeNewPrimitiveColor(alpha) {
     // Scan / intestect and compute optimal color
-    // let alpha = 128;
     let a = 0x101 * 255 / alpha;
     let rsum = 0; let gsum = 0; let bsum = 0;
-    // let nbOut = 0;
     let nbIn = 0;
     for (let i = 0; i < bufferTestLength; i += 4) {
         if (bufferPrimitive[i] + bufferPrimitive[i + 1] + bufferPrimitive[i + 2] === 0) {
-            // nbOut++;
             continue;
         }
         const tr = bufferTarget[i];
@@ -197,16 +211,13 @@ function computeBufferDistance(buffer1, buffer2) {
         const tr = buffer1[i];
         const tg = buffer1[i + 1];
         const tb = buffer1[i + 2];
-        // const ta = buffer1[i + 3];
         const ar = buffer2[i];
         const ag = buffer2[i + 1];
         const ab = buffer2[i + 2];
-        // const aa = buffer2[i + 3];
-        const dr = tr - ar; const dg = tg - ag; const db = tb - ab; // const da = ta - aa;
-        total += dr * dr + dg * dg + db * db; // + da * da;
+        const dr = tr - ar; const dg = tg - ag; const db = tb - ab;
+        total += dr * dr + dg * dg + db * db;
     }
-    const distance = Math.sqrt(total / (inputWidth * inputHeight * 4)) / 255;
-    return distance;
+    return Math.sqrt(total / (inputWidth * inputHeight * 4)) / 255;
 }
 
 // Primitives
@@ -215,7 +226,6 @@ function makeBackground(color) {
     let planemat = new MeshBasicMaterial({ color });
     background = new Mesh(planegeom, planemat);
     return background;
-    // sceneTarget.remove(planeTarget);
 }
 
 function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
@@ -225,18 +235,14 @@ function makeNewPrimitive(color, cx, cy, rx, ry, angle, alpha) {
     return e;
 }
 
-// Main algorithm
+// Algorithm internals
 let currentPrimitive;
 let step = 0;
-let configAlpha = 100;
 let generator;
 let sobol;
-let nbSobol = 64;
 let debo = false;
 let rng = new Random('Alpha');
-let maxIter = 25;
 let currentIter = 0;
-let maxShapes = 5;
 let nbShapes = 0;
 const STEP0 = 0;
 const STEP1A = 1; const STEP1B = 2; const STEP1C = 3;
@@ -251,7 +257,6 @@ function step0() {
     fillBuffer(rendererTarget, renderTargetTarget, bufferTarget);
 
     // Compute background color
-    // let color = new Color(0xffffff);
     let color = computeBackgroundColorOutput();
 
     // Init CurrentScene with background
@@ -320,13 +325,10 @@ function step1b() {
 
 function _computeEnergy() {
     // Update rasters
-    // fillBuffer(rendererCurrent, renderTargetCurrent, bufferCurrent);
     fillBuffer(rendererTest, renderTargetTest, bufferTest);
 
     // Compute Energy
-    // let dCurrent = computeBufferDistance(bufferTarget, bufferCurrent);
-    let newEnergy = computeBufferDistance(bufferTarget, bufferTest);
-    return newEnergy;
+    return computeBufferDistance(bufferTarget, bufferTest);
 }
 
 function step1c() {
@@ -373,7 +375,7 @@ function step2c() {
     if (newEnergy < currentPrimitive.energy) {
         currentPrimitive.updateMesh(2);
         currentPrimitive.snapshot();
-        // console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
+        if (debo) console.log(`HillClimb found a new start! New energy: ${newEnergy}`);
         currentPrimitive.energy = newEnergy;
     } else {
         if (currentPrimitive._saved) {
@@ -409,11 +411,9 @@ function step3() {
         let a = configAlpha;
         scenePrimitive.remove(currentPrimitive.getMesh(0));
         sceneTest.remove(currentPrimitive.getMesh(1));
-        // sceneCurrent.remove(currentPrimitive.getMesh(2));
         currentPrimitive = makeNewPrimitive(new Color(0xffffff), 100, 100, 1, 1, 0, a);
         scenePrimitive.add(currentPrimitive.getMesh(0));
         sceneTest.add(currentPrimitive.getMesh(1));
-        // sceneCurrent.add(currentPrimitive.getMesh(2));
         step = STEP1A;
     } else {
         step = STEP4;
@@ -424,9 +424,11 @@ function step4() {
     console.log('Done!');
     isRequestingCapture = true;
 
-    isEncoderStarted = false;
-    encoder.finish();
-    encoder.download('anim.gif');
+    if (captureToGIF) {
+        isEncoderStarted = false;
+        encoder.finish();
+        encoder.download('anim.gif');
+    }
 
     step++; // = STEP0;
 }
@@ -446,7 +448,9 @@ function addListeners() {
                 isRequestingCapture = true;
                 break;
             case 221: // À
-                isRequestingStep = true;
+                if (tScenePasses > 2) {
+                    isRequestingStep = true;
+                }
                 break;
             default: break;
         }
@@ -463,14 +467,6 @@ function loadImage(insideWidth, insideHeight, path) {
     planeTarget = new Mesh(planegeom, planemat);
     sceneTarget.add(planeTarget);
 }
-
-let isRequestingCapture = false;
-let isRequestingStep = false;
-let encoder = new GIFEncoder();
-encoder.setRepeat(0);
-encoder.setSize(inputWidth, inputHeight);
-encoder.start();
-let isEncoderStarted = true;
 
 function captureFrame() {
     isRequestingCapture = false;
@@ -489,8 +485,9 @@ function captureFrame() {
             c[i * inputWidth * 4 + j + 3] = bufferTest[k++];
         }
     }
-    if (isEncoderStarted)
+    if (isEncoderStarted) {
         encoder.addFrame(c, true);
+    }
 }
 
 function stepAlgorithm() {
@@ -510,20 +507,29 @@ function stepAlgorithm() {
 
 function renderPass(composer, renderer, scene, camera) {
     renderer.render(scene, camera);
+    // Compose twice into renderTarget
+    composer.render();
     composer.render();
 }
 
+function renderTargetScene() {
+    renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);
+}
+
+let tScenePasses = 0;
 function animate() {
     requestAnimationFrame(animate);
+    if (tScenePasses <= 3) {
+        renderTargetScene();
+        tScenePasses++;
+        return;
+    }
     if (isRequestingCapture) {
         captureFrame();
     }
     if (isRequestingStep) {
         stepAlgorithm();
     }
-    renderPass(composerTarget, rendererTarget, sceneTarget, mainCamera);
     renderPass(composerTest, rendererTest, sceneTest, mainCamera);
-    renderPass(composerTest, rendererTest, sceneTest, mainCamera);
-    renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
     renderPass(composerPrimitive, rendererPrimitive, scenePrimitive, mainCamera);
 }
