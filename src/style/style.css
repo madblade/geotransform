@@ -12,3 +12,6 @@ h5 { margin-top: 10px; }
 #button-apply-settings { margin: 10px 0; }
 p { text-align: justify; }
 #wrapper-shape-type { margin-top: 5px; }
+#cors-error { color: red; display: none; }
+#cors-error a { color: orange; }
+img { max-width: 512px; height: auto; }

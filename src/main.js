@@ -53,8 +53,8 @@ let configAlpha = 128;
 let nbSobol = 64;
 let maxIter = 25;
 let maxShapes = 200;
-let ELLIPSE = 0; let RECTANGLE = 1; let TRIANGLE = 2;
-let RELLIPSE = 3; let RRECTANGLE = 4;
+const ELLIPSE = 0; const RECTANGLE = 1; const TRIANGLE = 2;
+const RELLIPSE = 3; const RRECTANGLE = 4;
 let primitiveType = ELLIPSE;
 
 // Capture settings
@@ -713,5 +713,15 @@ function applyGUISettings() {
         inputImage = imageSrc;
         document.getElementById('input-image').src = imageSrc;
         tScenePasses = 0;
+        new TextureLoader().load(
+            imageSrc, () => {
+                document.getElementById('cors-error')
+                    .setAttribute('style', 'display: none;');
+            },
+            () => {},
+            () => {
+                document.getElementById('cors-error')
+                    .setAttribute('style', 'display: block;');
+            });
     }
 }
