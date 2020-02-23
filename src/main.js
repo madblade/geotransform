@@ -120,7 +120,7 @@ function init(imagePath) {
     let insideHeight = inputHeight / 10;
     let insideWidth = inputWidth / 10;
     mainCamera = new PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
-    mainCamera.position.set(0, 0, (0.5 * insideHeight) / (Math.tan(Math.PI / 8)));
+    mainCamera.position.set(0, 0, 0.5 * insideHeight / Math.tan(Math.PI / 8));
 
     // FXAA
     composerTarget = newComposer(rendererTarget, sceneTarget, mainCamera, renderTargetTarget);
@@ -206,12 +206,11 @@ function computeNewPrimitiveColor(alpha) {
         bsum += (tb - cb) * a + cb * 0x101;
         nbIn++;
     }
-    let c = new Color(
+    return new Color(
         clamp((rsum / nbIn) >> 8, 0, 255) / 256,
         clamp((gsum / nbIn) >> 8, 0, 255) / 256,
         clamp((bsum / nbIn) >> 8, 0, 255) / 256,
     );
-    return c;
 }
 
 function computeBufferDistance(buffer1, buffer2) {
@@ -467,20 +466,6 @@ function clamp(n, min, max) {
 }
 
 function addListeners() {
-    document.addEventListener('keydown', event => {
-        switch (event.keyCode) {
-            case 66: // B
-                isRequestingCapture = true;
-                break;
-            case 221: // À
-                if (tScenePasses > tScenePassesNecessary - 1) {
-                    isRequestingStep = true;
-                }
-                break;
-            default: break;
-        }
-    });
-
     document.getElementById('button-start').addEventListener('click',
         () => requestRestart());
     document.getElementById('button-stop').addEventListener('click',

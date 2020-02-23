@@ -242,8 +242,7 @@ EllipseGenerator.prototype.mutate = function(ellipse) {
                 ry = rng.clamp(ry + rng.normal() * this.ryrange * mf, this.rymin, this.rymax);
                 break;
             case 2:
-                t = rng.clamp(t + rng.normal() * rng.normal() *
-                    this.anglerange, this.anglemin, this.anglemax);
+                t = rng.clamp(t + rng.normal() * this.anglerange, this.anglemin, this.anglemax);
                 break;
             default: break;
         }
