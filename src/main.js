@@ -640,10 +640,10 @@ function updateGUI(isRunning) {
     let hillIterations = document.getElementById('number-input-hillclimb');
 
     let shape = document.getElementById('dropdown-shape');
-    let imageSrc = document.getElementById('text-input-image-source');
+    // let imageSrc = document.getElementById('text-input-image-source');
 
     let disabledRun = [startBtn, restartBtn, resumeBtn, saveSettingsBtn,
-        adaptive, gif, nbShapesInput, sobolSamples, hillIterations, shape, imageSrc];
+        adaptive, gif, nbShapesInput, sobolSamples, hillIterations, shape];
 
     if (isRunning)
     {
