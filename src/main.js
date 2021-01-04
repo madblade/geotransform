@@ -67,6 +67,9 @@ let isEncoderStarted = false;
 let isRequestingCapture = false;
 let isRequestingStep = false;
 
+document.getElementById('input-image').src = inputImage;
+document.getElementById('text-input-image-source').placeholder = inputImage;
+
 init(inputImage);
 addListeners();
 animate();

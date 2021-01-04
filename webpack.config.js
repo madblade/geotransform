@@ -39,9 +39,9 @@ module.exports = function(env) {
                 },
                 {
                     test: /\.(png|svg|jpg|gif)$/,
-                    use: [
-                        'file-loader',
-                    ],
+                    use: {
+                        loader: 'file-loader'
+                    },
                 },
             ]
         },
